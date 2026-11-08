@@ -5,7 +5,7 @@
  * Docker container with read-only mounts and no credentials. Never run
  * this executor on arbitrary downloaded third-party repositories.
  */
-import {cpSync,mkdtempSync,rmSync,readFileSync,writeFileSync,mkdirSync,appendFileSync,existsSync} from 'node:fs';
+import {cpSync,mkdtempSync,rmSync,readFileSync,writeFileSync,mkdirSync,appendFileSync,existsSync,chmodSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
@@ -30,6 +30,8 @@ function git(args,dir){
 function createSandbox(name){
  const work=mkdtempSync(join(tmpdir(),'toyol-quality-'+name+'-'));
  cpSync(resolve('benchmarks',name),work,{recursive:true});
+ // The offline test runner uses an unprivileged UID; grant read/traverse of this controlled fixture directory only.
+ chmodSync(work,0o755);
  git(['init','--quiet'],work);
  git(['add','src','tests'],work);
  git(['-c','user.name=ToyolBenchmark','-c','user.email=benchmark@example.invalid','commit','--quiet','-m','controlled baseline'],work);

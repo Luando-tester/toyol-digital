@@ -62,7 +62,7 @@ test('worker routes docs and data jobs into the expanded skill pack',()=>{
  const csv=plan(gig({title:'Rename CSV column full_name to name in data/users.csv'}));
  assert.equal(csv?.skill.kind,'csv-column');
 });
-test('git exports real data and .gitignore patches from expanded skills',()=>{
+test('git exports real data and .gitignore patches from expanded skills',async()=>{
  const root=mkdtempSync(join(tmpdir(),'toyol-multi-integration-'));
  const git=(args)=>execFileSync('git',args,{cwd:root,stdio:'pipe',timeout:10000});
  try {

@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { parseInstruction, applyInstruction } from './skills.mjs';
 import { parseExtra, applyExtra } from './skills-plus.mjs';
+import { staticValidate } from './static-check.mjs';
 
 const ISSUE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)(?:[/?#].*)?$/;
 const TOKEN='[A-Za-z_$][A-Za-z0-9_$]{2,59}';
@@ -96,10 +97,11 @@ export async function execute(task){
   const root=join(tmp,'repo');
   git(['clone','--quiet','--depth','1','--','https://github.com/'+task.owner+'/'+task.repo+'.git',root],tmp);
   const solved=task.skill.path ? applyExtra(root,task.skill) : applyInstruction(root,task.skill);
+  const staticChecks=staticValidate(root,solved.files);
   const diff=collectPatch(root);
   mkdirSync('out/stage2',{recursive:true});
   writeFileSync('out/stage2/solution.patch',diff+'\n');
-  const manifest={status:'PATCH_PREPARED_NOT_SUBMITTED',issue:task.url,advertised_reward:task.amount+' '+task.currency,files:solved.files,replacements:solved.count,skill:solved.skill,patch_sha256:createHash('sha256').update(diff).digest('hex'),checks:['issue open and bounty-labelled','no assigned party or high comment count','git diff --check'],not_verified:['project test suite','maintainer acceptance','payout'],created_at:new Date().toISOString()};
+  const manifest={status:'PATCH_PREPARED_NOT_SUBMITTED',issue:task.url,advertised_reward:task.amount+' '+task.currency,files:solved.files,replacements:solved.count,skill:solved.skill,patch_sha256:createHash('sha256').update(diff).digest('hex'),checks:['issue open and bounty-labelled','no assigned party or high comment count','git diff --check',...staticChecks],not_verified:['project test suite','maintainer acceptance','payout'],created_at:new Date().toISOString()};
   writeFileSync('out/stage2/manifest.json',JSON.stringify(manifest,null,2));
   return manifest;
  }finally{rmSync(tmp,{recursive:true,force:true});}

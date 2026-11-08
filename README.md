@@ -1,6 +1,6 @@
 # 🧟 Toyol Digital
 
-**Status v0.5: radar berjadual, pelaksana terhad, audit padanan pasaran dan log bukti. BELUM menghasilkan pendapatan.**
+**Status v0.6: 11 kemahiran pembetulan terhad + pemeriksaan kelayakan quest + semakan sintaks. BELUM menghasilkan pendapatan.**
 
 Toyol menyemak [suapan terbuka Jobbi](https://jobbi.org/gigs.json) secara berkala, mengasingkan tugasan untuk agen digital yang mengiklankan ganjaran USD/USDC, dan menyenarai pendek sehingga lapan calon. Ia menapis petunjuk deposit, staking, referral, yuran dan posting media sosial.
 
@@ -58,8 +58,36 @@ Audit automatik selepas mengimbas 657 listing: 273 lepas penapisan awal; 49 beru
 
 Syarat rasmi bagi platform khusus ejen serta halangan dompet, identiti tandatangan, penerimaan tugasan dan pengeluaran MYR telah direkod dalam [PAYOUT_GATE.md](docs/PAYOUT_GATE.md). Ini bukan kebenaran untuk mencipta dompet, membuka akaun berbayar atau menuntut tugasan. Laluan pembayaran masih belum diaktifkan.
 
+## Skill Pack v0.6 (11 kemahiran pembetulan yang benar-benar diuji)
+
+3 kemahiran asal: **rename identifier**, **JSX boolean prop**, **typo dokumentasi**.
+
+8 kemahiran tambahan, semuanya memerlukan arahan khusus dan terhad kepada satu fail atau skop jelas:
+
+| Domain | Kemahiran | Contoh arahan tepat |
+|---|---|---|
+| Dokumentasi | Betulkan destinasi pautan Markdown | Fix broken markdown link https://old.example to https://new.example in README.md |
+| Dokumentasi | Tukar tajuk Markdown | Rename markdown heading "Intro" to "Overview" in docs/guide.md |
+| Kod | Tukar nama modul import | Replace import old-package with new-package in src/main.ts |
+| Kod | Buang satu baris log ringkas | Remove console.log from src/main.ts |
+| Pengurusan repo | Tambah corak .gitignore | Add *.log to .gitignore |
+| Data JSON | Kemas kini medan asas yang sedia ada | Set enabled to false in data/config.json |
+| Data CSV | Tukar nama kolum pada pengepala mudah | Rename CSV column fullname to name in data/list.csv |
+| Data/kod/dokumen | Ganti literal tertentu dalam fail yang ditentukan | Replace literal "helloo" with "hello" in README.md |
+
+Pelaksana akan menolak arahan yang kabur atau tidak boleh dibuktikan, cubaan mengubah fail di luar checkout, perubahan terlalu besar, JSON rosak, atau patch Git tidak sah. Ini ialah **automasi pembetulan khusus**, bukan pemahaman umum AI dan bukan bukti bahawa tugasan komersial sudah diterima.
+
+### Dua keupayaan sokongan baharu
+
+- **Quest Intelligence** (`src/quest-intel.mjs`): membaca API isu GitHub awam secara terhad untuk memeriksa status, tuntutan pesaing, tanda bayaran, usia isu, syarat kerja manusia, dan keperluan deposit. Hasil direkod sebagai bukti dalam `out/intelligence/`. Status lulus masih *bersyarat*, bukan kebenaran menghantar kerja.
+- **Static Validation** (`src/static-check.mjs`): menyemak sintaks JavaScript, Python dan JSON tanpa menjalankan program atau memasang dependencies daripada repo orang lain. TypeScript/JSX/Markdown hanya diberi pemeriksaan terhad dan tidak didakwa lulus ujian projek.
+
+**Bukti terkini: 48 daripada 48 ujian Github Actions lulus.** Workflow `push` menjalankan ujian sahaja, dan `scan` sengaja tidak dijalankan pada push bagi menghormati had suapan. Pemeriksaan penuh quest intelligence hanya boleh dibuktikan selepas run `schedule` atau `workflow_dispatch` berikutnya.
+
+**Penilaian pasaran sebelumnya (659 item, hanya 1 padanan) tidak boleh dianggap bertambah hanya kerana bilangan kemahiran meningkat.** Padanan baharu akan diukur oleh `src/market.mjs` dalam run imbasan seterusnya.
+
 ## Apa yang belum ada
 
-Toyol **belum berjaya menyelesaikan tugasan luar yang diterima sebagai kerja siap**, belum mempunyai saluran bayaran, dan belum menghasilkan pendapatan. Tahap 2 sekarang hanya menyokong tiga pembetulan kecil yang ditentukan oleh pola teks serta penolakan tugas bersaing; ia tidak menggunakan model AI berbayar; ia tidak menganggap patch sebagai tugasan selesai. Untuk benar-benar berpendapatan, perlu dipilih kelas kerja kecil yang membenarkan automasi, dengan kos sebenar sifar dan kaedah payout sah di Malaysia. Hanya selepas kitaran pembayaran pertama terbukti barulah wajar mengautomasikan pengulangan tugasan itu.
+Toyol **belum berjaya menyelesaikan tugasan luar yang diterima sebagai kerja siap**, belum mempunyai saluran bayaran, dan belum menghasilkan pendapatan. Tahap 2 sekarang menyokong sebelas pembetulan khusus serta penolakan tugas bersaing; ia tidak menggunakan model AI berbayar; ia tidak menganggap patch sebagai tugasan selesai. Untuk benar-benar berpendapatan, perlu dipilih kelas kerja kecil yang membenarkan automasi, dengan kos sebenar sifar dan kaedah payout sah di Malaysia. Hanya selepas kitaran pembayaran pertama terbukti barulah wajar mengautomasikan pengulangan tugasan itu.
 
 Jika imbasan gagal, lihat log pada Actions. GitHub Actions mungkin lewat atau menghentikan jadual selepas tempoh repositori awam tidak aktif. Sekiranya terma pelan percuma berubah, hentikan pelaksanaan dan jangan beralih kepada pelan berbayar tanpa kebenaran.

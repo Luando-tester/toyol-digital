@@ -1,4 +1,4 @@
-name: Toyol Radar and Stage 2 (RM0)
+name: Toyol Digital — Tests and Hourly Radar (RM0)
 on:
   workflow_dispatch:
   schedule:
@@ -6,35 +6,41 @@ on:
   push:
     branches: [main]
     paths:
-      - 'src/toyol.mjs'
-      - 'src/worker.mjs'
-      - 'src/skills.mjs'
-      - 'src/status.mjs'
-      - 'src/market.mjs'
-      - 'test/toyol.test.mjs'
-      - 'test/worker.test.mjs'
-      - 'test/skills.test.mjs'
-      - 'test/status.test.mjs'
-      - 'test/market.test.mjs'
+      - 'src/**'
+      - 'test/**'
       - '.github/workflows/toyol.yml'
 permissions:
   contents: read
-  issues: write
 concurrency:
   group: toyol-radar
   cancel-in-progress: false
 jobs:
-  scan:
+  tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 3
     steps:
       - name: Checkout Toyol repository only
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Verify Toyol Stage 1 and Stage 2 safeguards
+      - name: Run Toyol safety and patch tests
         run: node --test
-      - name: Scan public bounty feed
+
+  scan:
+    # Critical: pushes run tests ONLY. Public Jobbi feed must not be polled more than hourly.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout Toyol repository only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Scan public bounty feed (hourly only)
         run: node src/toyol.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -48,7 +54,7 @@ jobs:
         run: node src/status.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Preserve any prepared patch for review
+      - name: Preserve opportunity, patch and failure evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: toyol-run-evidence

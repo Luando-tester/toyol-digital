@@ -16,6 +16,7 @@ export function formatStatus(report, opts={}) {
   const failures = Array.isArray(report.failures) ? report.failures : [];
   const checked = Number.isInteger(report.checked) && report.checked >= 0 ? report.checked : 0;
   const found = report.found === true;
+  const a = opts.audit && typeof opts.audit === 'object' ? opts.audit : null;
   const lines = [
     MARKER,
     '',
@@ -29,6 +30,16 @@ export function formatStatus(report, opts={}) {
     '- Patch diserahkan: **0** | Kerja diterima: **0** | Pendapatan disahkan: **RM0**',
     '- Status: **'+(found ? 'PATCH DALAMAN UNTUK SEMAKAN' : 'BELUM ADA PENYELESAIAN SEBENAR')+'**'
   ];
+  if(a){
+    const indexed = Number.isInteger(a.total_feed_items)?a.total_feed_items:0;
+    const safeCount = Number.isInteger(a.passed_initial_safety_filters)?a.passed_initial_safety_filters:0;
+    const matches = Number.isInteger(a.matching_automated_skills)?a.matching_automated_skills:0;
+    lines.push('','### Audit padanan peluang','',
+      '- Tugasan diindeks: **'+indexed+'**',
+      '- Lulus saringan: **'+safeCount+'**',
+      '- Serasi dengan kemahiran Toyol: **'+matches+'**');
+    if(matches <= 1)lines.push('- **Jurang besar:** kemahiran Toyol hampir tiada padanan; pencarian lebih kerap bukan penyelesaiannya.');
+  }
   if(link) lines.push('- Bukti pelaksanaan: '+link);
   if(found && typeof report.issue==='string' && /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/\d+$/.test(report.issue)) {
     lines.push('- Tugasan sumber: '+report.issue);
@@ -48,10 +59,12 @@ export function mergeStatus(body,status){
 }
 async function main(){
   const report = JSON.parse(readFileSync('out/stage2/scan-result.json','utf8'));
+  const audit = JSON.parse(readFileSync('out/market/fit.json','utf8'));
   const reportText = formatStatus(report,{
     event:process.env.GITHUB_EVENT_NAME,
     runId:process.env.GITHUB_RUN_ID,
-    time:new Date().toISOString()
+    time:new Date().toISOString(),
+    audit
   });
   console.log(reportText);
   if(process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,reportText+'\n','utf8');

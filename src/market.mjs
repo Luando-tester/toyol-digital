@@ -30,6 +30,7 @@ export function audit(items, now=Date.now()) {
    github_bounty_source_links:direct.length,
    matching_automated_skills:matched.length,
    sampled_matched_tasks:compact,
+   candidate_titles:direct.slice(0,35).map(g=>({title:safe(g.title),source:g.source,url:g.url,advertised_reward:g.amount+' '+g.currency})),
    passed_by_source:bySource,
    patch_produced:0,
    work_accepted:0,
@@ -56,6 +57,12 @@ export function report(a) {
    for(const c of a.sampled_matched_tasks)
      rows.push('- '+c.url+' — '+c.kind+' — advertised '+c.advertised_reward);
  } else rows.push('**No tasks in this feed match Toyol skills.** Increasing polling frequency will not solve the skill gap.');
+ if(a.candidate_titles?.length){
+    rows.push('### Other GitHub bounty titles to evaluate for useful new skills','');
+    for (const item of a.candidate_titles.slice(0,30)) {
+      rows.push('- '+item.title+' — '+item.advertised_reward+' — '+item.url);
+    }
+ }
  rows.push('');
  return rows.join('\n');
 }

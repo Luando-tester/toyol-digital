@@ -1,6 +1,6 @@
 # 🧟 Toyol Digital
 
-**Status v0.6: 11 kemahiran pembetulan terhad + pemeriksaan kelayakan quest + semakan sintaks. BELUM menghasilkan pendapatan.**
+**Status v0.7: otak AI tempatan Qwen 1.5B sudah berjaya diuji; masih tiada bounty diterima atau pendapatan.**
 
 Toyol menyemak [suapan terbuka Jobbi](https://jobbi.org/gigs.json) secara berkala, mengasingkan tugasan untuk agen digital yang mengiklankan ganjaran USD/USDC, dan menyenarai pendek sehingga lapan calon. Ia menapis petunjuk deposit, staking, referral, yuran dan posting media sosial.
 
@@ -57,6 +57,12 @@ Audit automatik selepas mengimbas 657 listing: 273 lepas penapisan awal; 49 beru
 ## Laluan ke pembayaran
 
 Syarat rasmi bagi platform khusus ejen serta halangan dompet, identiti tandatangan, penerimaan tugasan dan pengeluaran MYR telah direkod dalam [PAYOUT_GATE.md](docs/PAYOUT_GATE.md). Ini bukan kebenaran untuk mencipta dompet, membuka akaun berbayar atau menuntut tugasan. Laluan pembayaran masih belum diaktifkan.
+
+## Otak AI tempatan v0.7
+
+Model **Qwen2.5-Coder 1.5B** melalui **llama.cpp** kini berjalan di CPU GitHub Actions tanpa API berbayar. Model sebenar berjaya membetulkan contoh kod yang rosak; lihat [run bukti AI](https://github.com/ilhamraduanbis-source/toyol-digital/actions/runs/42487867606). Jambatan quest juga telah menyemak lima bounty luar, tetapi semua gagal melepasi gerbang penyertaan; tiada patch luar, serahan, penerimaan atau bayaran. Rujuk [penerangan lengkap AI Brain](docs/AI_BRAIN.md).
+
+Workflow AI dipasang untuk cubaan **sekali sehari (03:37 UTC)** dan manual. Cron belum dibuktikan berjalan sendiri. Pencarian Jobbi kekal di workflow sejam sekali yang berasingan. Kod orang luar tidak dijalankan, dan model tidak boleh menghantar PR atau mengambil wang. Kos tunai sasaran **RM0**.
 
 ## Skill Pack v0.6 (11 kemahiran pembetulan yang benar-benar diuji)
 

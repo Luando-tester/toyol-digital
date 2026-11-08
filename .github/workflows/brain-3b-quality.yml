@@ -1,0 +1,73 @@
+name: Toyol AI Brain — 3B Quality Comparison (RM0)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/brain-3b-quality.yml'
+permissions:
+  contents: read
+concurrency:
+  group: toyol-ai-brain-3b-experiment
+  cancel-in-progress: false
+jobs:
+  quality-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - name: Checkout only Toyol repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Run framework safety tests, excluding deliberately broken benchmark fixtures
+        run: node --test test/*.test.mjs
+      - name: Install verified llama.cpp CPU release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/llama-3b"
+          curl --fail --location --retry 2 --connect-timeout 20 --max-time 150 \
+            "https://github.com/ggml-org/llama.cpp/releases/download/b12202/llama-b12202-bin-ubuntu-x64.tar.gz" \
+            --output "$RUNNER_TEMP/llama-3b.tar.gz"
+          tar -xzf "$RUNNER_TEMP/llama-3b.tar.gz" -C "$RUNNER_TEMP/llama-3b"
+      - name: Download official Qwen 3B Q4_K_M and verify its SHA256
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --connect-timeout 20 --max-time 550 \
+            "https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct-GGUF/resolve/main/qwen2.5-coder-3b-instruct-q4_k_m.gguf?download=true" \
+            --output "$RUNNER_TEMP/brain-3b.gguf"
+          echo "724fb256bec1ff062b2f65e4569e871ad2e95ab2a3989723d1769c54294730b7  $RUNNER_TEMP/brain-3b.gguf" | sha256sum -c -
+      - name: Compare real 3B model against controlled hidden behavioral tests
+        shell: bash
+        env:
+          TOYOL_MODEL_ID: Qwen2.5-Coder-3B-Instruct-Q4_K_M
+        run: |
+          set -euo pipefail
+          SERVER="$(find "$RUNNER_TEMP/llama-3b" -type f -name llama-server | head -n 1)"
+          test -n "$SERVER"
+          chmod +x "$SERVER"
+          export LD_LIBRARY_PATH="$(dirname "$SERVER"):$RUNNER_TEMP/llama-3b/lib:${LD_LIBRARY_PATH:-}"
+          "$SERVER" --model "$RUNNER_TEMP/brain-3b.gguf" --host 127.0.0.1 --port 8080 --ctx-size 3072 --threads 4 --parallel 1 \
+            > "$RUNNER_TEMP/toyol-brain-3b.log" 2>&1 &
+          MODEL_PID=$!
+          trap 'kill "$MODEL_PID" 2>/dev/null || true' EXIT
+          READY=0
+          for n in $(seq 1 90); do
+            if curl --fail --silent "http://127.0.0.1:8080/health" | grep -q '"status":"ok"'; then READY=1; break; fi
+            if ! kill -0 "$MODEL_PID" 2>/dev/null; then break; fi
+            sleep 2
+          done
+          if [ "$READY" -ne 1 ]; then
+            tail -n 40 "$RUNNER_TEMP/toyol-brain-3b.log"
+            exit 1
+          fi
+          node src/brain-benchmark.mjs
+      - name: Save scorecard and verified patches, regardless of result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: toyol-ai-3b-quality
+          path: out/brain/benchmarks/
+          retention-days: 7
+          if-no-files-found: ignore

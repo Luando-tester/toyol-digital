@@ -8,7 +8,7 @@ export const FEED_URL = 'https://jobbi.org/gigs.json?lane=agent&limit=1000';
 const REPO = 'ilhamraduanbis-source/toyol-digital';
 const ISSUE_TITLE = '🧟 Toyol Radar — calon ganjaran untuk disahkan';
 const gradeScore = { 'A+': 25, A: 24, 'A-': 22, 'B+': 16, B: 14, 'B-': 12, 'C+': 5, C: 3 };
-const disallowed = /\b(deposit|staking|stake|bond|collateral|fund (?:a|the|another|new) task|pay (?:a|the) fee|purchase|buy (?:a|an|the) (?:token|product)|subscribe|referral|invite friends|post on (?:reddit|x|twitter|threads)|social media campaign)\b/i;
+const disallowed = /\b(deposit|staking|stake|bond|collateral|fund|funding|sponsor|seed a paid|create a paid|pay (?:a|the) fee|purchase|buy (?:a|an|the) (?:token|product)|subscribe|referral|invite friends|post on (?:reddit|x|twitter|threads)|social media campaign|macos|safari|requires (?:gpu|iphone|android device|physical hardware))\b/i;
 
 function clean(value, max = 250) {
   return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);

@@ -58,6 +58,12 @@ export function solveFolder(root,oldName,newName){
  return {count,files:changes.map(c=>c.path)};
 }
 function git(args,cwd){return execFileSync('git',args,{cwd,encoding:'utf8',timeout:30000,env:{...process.env,GH_TOKEN:'',GITHUB_TOKEN:'',GIT_TERMINAL_PROMPT:'0'}}).trim();}
+export function collectPatch(root){
+ git(['diff','--check'],root);
+ const diff=git(['diff','--','README.md','src','lib','docs','app','packages'],root);
+ if(!diff.startsWith('diff --git ')||diff.length>100000)throw Error('invalid patch');
+ return diff;
+}
 async function source(url){
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),12000);
  try{
@@ -89,9 +95,7 @@ export async function execute(task){
   const root=join(tmp,'repo');
   git(['clone','--quiet','--depth','1','--','https://github.com/'+task.owner+'/'+task.repo+'.git',root],tmp);
   const solved=applyInstruction(root,task.skill);
-  git(['diff','--check'],root);
-  const diff=git(['diff','--','src','lib','docs','app','packages'],root);
-  if(!diff.startsWith('diff --git ')||diff.length>100000)throw Error('invalid patch');
+  const diff=collectPatch(root);
   mkdirSync('out/stage2',{recursive:true});
   writeFileSync('out/stage2/solution.patch',diff+'\n');
   const manifest={status:'PATCH_PREPARED_NOT_SUBMITTED',issue:task.url,advertised_reward:task.amount+' '+task.currency,files:solved.files,replacements:solved.count,skill:solved.skill,patch_sha256:createHash('sha256').update(diff).digest('hex'),checks:['issue open and bounty-labelled','no assigned party or high comment count','git diff --check'],not_verified:['project test suite','maintainer acceptance','payout'],created_at:new Date().toISOString()};

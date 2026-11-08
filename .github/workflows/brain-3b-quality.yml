@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Run framework safety tests, excluding deliberately broken benchmark fixtures
+      - name: Run framework safety tests, including corrected Node syntax parser
         run: node --test test/*.test.mjs
       - name: Install verified llama.cpp CPU release
         shell: bash

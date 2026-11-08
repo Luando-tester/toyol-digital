@@ -12,8 +12,8 @@ export const extraSkillNames=Object.freeze([
 const PATH='(README\\.md|\\.gitignore|(?:docs|src|lib|app|data|fixtures|datasets)/[\\w./-]{2,100})';
 const NAME='[A-Za-z_$][\\w$-]{1,60}';
 const MOD='[@\\w./-]{2,90}';
-const URL='https:\\/\\/[^\\s<>\\x60\\x27"]{3,160}';
-const safePath=p=>typeof p==='string'&&!p.includes('..')&&!p.includes('\\')&&!p.includes('//')&&!p.startsWith('/')&&!p.split('/').some(x=>x.startsWith('.'));
+const URL_PATTERN='https:\\/\\/[^\\s<>\\x60\\x27"]{3,160}';
+const safePath=p=>p==='.gitignore'||(typeof p==='string'&&!p.includes('..')&&!p.includes('\\')&&!p.includes('//')&&!p.startsWith('/')&&!p.split('/').some(x=>x.startsWith('.')));
 const docsPath=p=>/^(README\.md|docs\/[\w./-]+\.md)$/i.test(p);
 const codePath=p=>/^(src|lib|app)\/[\w./-]+\.(tsx?|jsx?)$/i.test(p);
 const dataPath=p=>/^(data|fixtures|datasets)\/[\w./-]+$/i.test(p);
@@ -24,7 +24,7 @@ export function parseExtra(title) {
  const s=String(title||'').trim().replace(/^\[BOUNTY\]\s*/i,'');
  if(s.length>240)return null;
  let m;
- m=new RegExp('^(?:fix broken markdown link|replace markdown link|update markdown link)\\s+('+URL+')\\s+(?:to|with)\\s+('+URL+')\\s+in\\s+'+PATH+'$','i').exec(s);
+ m=new RegExp('^(?:fix broken markdown link|replace markdown link|update markdown link)\\s+('+URL_PATTERN+')\\s+(?:to|with)\\s+('+URL_PATTERN+')\\s+in\\s+'+PATH+'$','i').exec(s);
  if(m&&safePath(m[3])&&docsPath(m[3])&&goodURL(m[1])&&goodURL(m[2])&&m[1]!==m[2])
    return {kind:'markdown-link',from:m[1],to:m[2],path:m[3]};
  m=new RegExp('^(?:rename markdown heading|replace markdown heading)\\s+["\\x60]([^"\\x60]{3,60})["\\x60]\\s+(?:to|with)\\s+["\\x60]([^"\\x60]{3,60})["\\x60]\\s+in\\s+'+PATH+'$','i').exec(s);

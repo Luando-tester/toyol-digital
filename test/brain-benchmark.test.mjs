@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {scenarios,score,feedbackMessage,runIsolatedTests,solveScenario} from '../src/brain-benchmark.mjs';
+import {statSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
 
 const edit={edits:[{
  path:'src/uniqueIds.mjs',
@@ -38,7 +40,11 @@ test('bench engine creates a real patch, can use second-attempt feedback',async(
    if(modelCount===2)assert.match(messages.at(-1).content,/Previous attempt failed/);
    return edit;
   },
-  testRunner:async()=>({pass:++runCount===2,feedback:'Expected 2, actual 1'})
+  testRunner:async(root)=>{
+   assert.equal(statSync(root).mode & 0o005,0o005,'fixture root must be readable/traversable by unprivileged Docker UID');
+   assert.ok(existsSync(join(root,'tests','acceptance.test.mjs')),'acceptance tests must exist in sandbox');
+   return {pass:++runCount===2,feedback:'Expected 2, actual 1'};
+  }
  });
  assert.equal(result.status,'BEHAVIORAL_TESTS_PASS_IN_OFFLINE_SANDBOX',JSON.stringify(result));
  assert.equal(result.attempts.length,2);
@@ -55,4 +61,14 @@ test('AI attempt that rewrites hidden tests never passes',async()=>{
  });
  assert.equal(result.status,'BEHAVIORAL_TESTS_NOT_PASSED',JSON.stringify(result));
  assert.equal(result.earned_amount_verified,0);
+});
+
+test('missing acceptance file must be reported as infrastructure, not failed AI reasoning',()=>{
+ const r=runIsolatedTests('/tmp/toyol-bench-safe',{run:()=>{
+  const e=new Error('Docker exit 1');
+  e.stdout="Could not find 'tests/acceptance.test.mjs'";
+  throw e;
+ }});
+ assert.equal(r.infra,true);
+ assert.equal(r.pass,false);
 });

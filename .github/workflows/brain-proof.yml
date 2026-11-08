@@ -1,12 +1,17 @@
-name: Toyol AI Brain — Real CPU Model Proof (RM0)
+name: Toyol AI Brain — Local Model and Daily Quest Draft (RM0)
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '37 3 * * *'
   push:
     branches: [main]
     paths:
       - '.github/workflows/brain-proof.yml'
 permissions:
   contents: read
+concurrency:
+  group: toyol-ai-brain
+  cancel-in-progress: false
 jobs:
   real-ai-proof:
     runs-on: ubuntu-24.04
@@ -61,7 +66,10 @@ jobs:
             tail -n 50 "$RUNNER_TEMP/toyol-model.log" || true
             exit 1
           fi
-          node src/brain-smoke.mjs
+          if [ "${{ github.event_name }}" = "push" ]; then
+            node src/brain-smoke.mjs
+          fi
+          node src/brain-quest.mjs
       - name: Preserve model proof, whether succeeded or failed
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

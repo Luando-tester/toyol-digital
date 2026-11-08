@@ -1,6 +1,6 @@
 # 🧟 Toyol Digital
 
-**Status v0.4: radar, pelaksana terhad dan log status berterusan. BELUM menghasilkan pendapatan.**
+**Status v0.5: radar berjadual, pelaksana terhad, audit padanan pasaran dan log bukti. BELUM menghasilkan pendapatan.**
 
 Toyol menyemak [suapan terbuka Jobbi](https://jobbi.org/gigs.json) secara berkala, mengasingkan tugasan untuk agen digital yang mengiklankan ganjaran USD/USDC, dan menyenarai pendek sehingga lapan calon. Ia menapis petunjuk deposit, staking, referral, yuran dan posting media sosial.
 
@@ -8,13 +8,13 @@ Jika ada calon, Toyol membuka atau mengemas kini satu **GitHub Issue** supaya ha
 
 ## Operasi
 
-- **Tugas automatik**: [Toyol Radar (RM0)](../../actions/workflows/toyol.yml), dijadualkan pada minit 23 dan 53 setiap jam (UTC), kira-kira setiap 30 minit. Pemicu cron masih perlu dibuktikan dengan rekod sebenar; push run sahaja bukan bukti jadual berjalan, tertakluk pada kelewatan GitHub Actions.
+- **Tugas automatik**: [Toyol Radar (RM0)](../../actions/workflows/toyol.yml), dijadualkan pada minit 29 setiap jam (UTC), sekali sejam mengikut had Jobbi. Pelaksanaan cron masih belum dibuktikan oleh rekod `schedule`., tertakluk pada kelewatan GitHub Actions.
 - **Hasil imbasan**: Actions → run → Summary. Jika ada calon, semak tab Issues.
 - **Ujian**: Node.js terbina dalam, tanpa pakej pihak ketiga: `node --test`.
 - **Trigger manual**: Actions → Toyol Radar (RM0) → Run workflow.
 - **Kod**: `src/toyol.mjs`; jadual: `.github/workflows/toyol.yml`.
 
-Sumber data ialah [Jobbi](https://jobbi.org/docs/mcp/), indeks read-only, bukan pihak yang menerima tugasan atau membayar. Hanya mengakses feed awamnya setiap jam. Tugasan asal mungkin perlukan akaun, kredit, deposit, perkakasan, atau kelulusan lain yang tidak ditangkap penapis automatik.
+Sumber data ialah [Jobbi](https://jobbi.org/docs/mcp/), indeks read-only, bukan pihak yang menerima tugasan atau membayar. Workflow `push` menjalankan ujian sahaja. Feed Jobbi diakses oleh job `scan` yang dijadualkan sekali sejam atau melalui `workflow_dispatch` manual; jangan cetuskan manual berulang kali. Tugasan asal mungkin perlukan akaun, kredit, deposit, perkakasan, atau kelulusan lain yang tidak ditangkap penapis automatik.
 
 ## Sempadan Toyol
 
@@ -47,6 +47,12 @@ Untuk melihat keputusan sebenar: Actions → Toyol Radar and Stage 2 (RM0) → r
 - Pelaksanaan workflow terakhir yang disahkan ialah **push**, bukan **schedule**. GitHub boleh melambatkan atau menggugurkan cron, maka kebolehpercayaan jadual **belum terbukti**.
 - Imbasan terakhir: satu calon berkaitan pembetulan kod tetapi ditolak kerana isu sudah bersaing. **0 patch untuk tugasan luar, 0 penerimaan, RM0 diterima.**
 - Jadual telah didaftarkan semula melalui perubahan cron. Pantau dalam Actions sama ada run dengan event **schedule** muncul. Jangan anggap aktif hanya kerana ujian **push** hijau.
+
+### Audit peluang sebenar (8 November 2026)
+
+Audit automatik selepas mengimbas 657 listing: 273 lepas penapisan awal; 49 berupa isu GitHub daripada platform yang disokong; hanya **1** sepadan dengan kemahiran Toyol. Calon itu mempunyai tuntutan/persaingan dan ditolak. Ini **jurang kebolehan**, bukannya masalah frekuensi carian. Ujian integrasi turut membuktikan pembetulan typo `README.md` kini dapat dieksport sebagai patch Git sebenar. **23/23 ujian lulus**, tetapi 0 patch tugasan luar, 0 kerja diterima dan RM0 pembayaran terbukti.
+
+**Perlindungan sumber:** `push` hanya menjalankan `node --test`. Hanya `schedule` atau arahan manual boleh mengimbas Jobbi. Jobbi meminta pengguna tidak mengundi feed lebih kerap daripada sekali sejam. Pelaksanaan `schedule` belum diperhatikan, jadi jadual tidak boleh dianggap terbukti walaupun kod workflow telah disahkan.
 
 ## Apa yang belum ada
 

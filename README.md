@@ -1,14 +1,14 @@
 # 🧟 Toyol Digital
 
-**Status v0.3: radar dan pelaksana pembetulan terhad. BUKAN mesin yang sudah memperoleh duit.**
+**Status v0.4: radar, pelaksana terhad dan log status berterusan. BELUM menghasilkan pendapatan.**
 
 Toyol menyemak [suapan terbuka Jobbi](https://jobbi.org/gigs.json) secara berkala, mengasingkan tugasan untuk agen digital yang mengiklankan ganjaran USD/USDC, dan menyenarai pendek sehingga lapan calon. Ia menapis petunjuk deposit, staking, referral, yuran dan posting media sosial.
 
-Jika ada calon, Toyol membuka atau mengemas kini satu **GitHub Issue** supaya hasil tidak hilang. Semua penyenaraian ialah *petunjuk sahaja* dan perlu disahkan di sumber asal.
+Jika ada calon, Toyol membuka atau mengemas kini satu **GitHub Issue** supaya hasil tidak hilang. Bahagian **Quest Progress** pada Issue #1 menyatakan pencetus sebenar, bilangan calon khusus, sebab penolakan dan pendapatan yang disahkan. Semua penyenaraian ialah *petunjuk sahaja* dan perlu disahkan di sumber asal.
 
 ## Operasi
 
-- **Tugas automatik**: [Toyol Radar (RM0)](../../actions/workflows/toyol.yml), dijadualkan pada minit 17 dan 47 setiap jam (UTC), kira-kira setiap 30 minit, tertakluk pada kelewatan GitHub Actions.
+- **Tugas automatik**: [Toyol Radar (RM0)](../../actions/workflows/toyol.yml), dijadualkan pada minit 23 dan 53 setiap jam (UTC), kira-kira setiap 30 minit. Pemicu cron masih perlu dibuktikan dengan rekod sebenar; push run sahaja bukan bukti jadual berjalan, tertakluk pada kelewatan GitHub Actions.
 - **Hasil imbasan**: Actions → run → Summary. Jika ada calon, semak tab Issues.
 - **Ujian**: Node.js terbina dalam, tanpa pakej pihak ketiga: `node --test`.
 - **Trigger manual**: Actions → Toyol Radar (RM0) → Run workflow.
@@ -27,7 +27,7 @@ Sumber data ialah [Jobbi](https://jobbi.org/docs/mcp/), indeks read-only, bukan 
 
 ## Tahap 2: pelaksana kerja kod terhad (v0.3)
 
-Toyol kini menjalankan `src/worker.mjs` selepas radar setiap jam. Ia boleh **mencuba pembaikan kod kecil yang dinyatakan secara tepat**, contohnya menamakan semula satu identifier (`Rename oldProp to newProp`) dalam projek sumber terbuka yang mempunyai isu bounty sebenar. Ia:
+Toyol kini menjalankan `src/worker.mjs` selepas setiap imbasan radar. Ia boleh **mencuba pembaikan kod kecil yang dinyatakan secara tepat**, contohnya menamakan semula satu identifier (`Rename oldProp to newProp`) dalam projek sumber terbuka yang mempunyai isu bounty sebenar. Ia:
 
 1. Membaca feed radar tanpa membuat panggilan Jobbi kedua.
 2. Memahami tiga kelas arahan yang spesifik: nama semula identifier, penggantian prop JSX boolean tertentu, dan pembetulan typo dokumentasi. Bukan tugasan terbuka yang memerlukan pertimbangan AI.
@@ -39,6 +39,14 @@ Toyol kini menjalankan `src/worker.mjs` selepas radar setiap jam. Ia boleh **men
 Jika tiada tugas sesuai, ia melaporkan tiada penyelesaian, bukannya mereka-reka kerja atau pendapatan. **Patch automatik belum sama dengan kerja yang benar-benar diuji menyeluruh, diserahkan, diterima atau dibayar.** Tiada penghantaran PR ke repo orang lain, sebarang tuntutan bounty, pendaftaran, token atau pemindahan dana.
 
 Untuk melihat keputusan sebenar: Actions → Toyol Radar and Stage 2 (RM0) → run terbaru → Job summary dan Artifacts (jika ada).
+
+## Audit operasi (8 November 2026)
+
+- Semua ujian terakhir: **19/19 lulus** dalam GitHub Actions.
+- Sumber tunggal masih suapan Jobbi, dengan saringan baharu untuk membuang tajuk kosong atau tidak boleh ditindak.
+- Pelaksanaan workflow terakhir yang disahkan ialah **push**, bukan **schedule**. GitHub boleh melambatkan atau menggugurkan cron, maka kebolehpercayaan jadual **belum terbukti**.
+- Imbasan terakhir: satu calon berkaitan pembetulan kod tetapi ditolak kerana isu sudah bersaing. **0 patch untuk tugasan luar, 0 penerimaan, RM0 diterima.**
+- Jadual telah didaftarkan semula melalui perubahan cron. Pantau dalam Actions sama ada run dengan event **schedule** muncul. Jangan anggap aktif hanya kerana ujian **push** hijau.
 
 ## Apa yang belum ada
 

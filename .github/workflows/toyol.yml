@@ -2,7 +2,7 @@ name: Toyol Radar and Stage 2 (RM0)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '23,53 * * * *'
+    - cron: '29 * * * *'
   push:
     branches: [main]
     paths:

@@ -56,10 +56,12 @@ export function runIsolatedTests(dir,{run=execFileSync}={}){
  }catch(e){
   if(e.code==='ENOENT')return {pass:false,infra:true,feedback:'Docker is not installed'};
   if(e.killed)return {pass:false,infra:true,feedback:'isolated test runner timeout'};
-  const details=String(e.stdout||'')+'\n'+String(e.stderr||'');
+  const stdout=String(e.stdout||'');
+  const details=String(e.stderr||'')+'\n'+stdout+'\n'+String(e.message||'');
+  const keyLines=stdout.split('\n').filter(x=>/not ok |actual:|expected:|failureType:|error:|# fail /i.test(x)).slice(0,14).join('\n');
   if(/Could not find ['\"]?tests\/acceptance\.test\.mjs|EACCES|permission denied|Cannot connect to the Docker daemon|pull access denied/i.test(details))
    return {pass:false,infra:true,feedback:'isolated benchmark fixture or container inaccessible'};
-  return {pass:false,feedback:feedbackMessage(details)};
+  return {pass:false,feedback:feedbackMessage(keyLines||details)};
  }
 }
 
@@ -105,7 +107,7 @@ export async function solveScenario(scenario,{
     result.attempts.push(entry);
     break;
    }catch(err){
-    entry.reason=feedbackMessage(err.message).slice(-350);
+    entry.reason=feedbackMessage(err.message).slice(-850);
     result.attempts.push(entry);
     if(entry.isolated_tests==='INFRA_UNVERIFIED'){result.status='INFRA_UNVERIFIED';break;}
     feedback=feedbackMessage(entry.reason);

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { parseInstruction, applyInstruction } from './skills.mjs';
 
 const ISSUE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)(?:[/?#].*)?$/;
 const TOKEN='[A-Za-z_$][A-Za-z0-9_$]{2,59}';
@@ -17,9 +18,9 @@ const sanitize=(x,n=160)=>String(x??'').replace(/[\x00-\x1f\x7f]/g,' ').trim().s
 export function plan(gig){
  if(!gig||!['algora','issuehunt','bountyhub','opire'].includes(gig.source))return null;
  if(!['USD','USDC'].includes(gig.currency)||!(Number(gig.amount)>0)||COST.test(gig.title+' '+gig.summary))return null;
- const url=ISSUE.exec(gig.url||'');const rename=RENAME.exec(gig.title||'');
- if(!url||!rename||rename[1]===rename[2])return null;
- return {owner:url[1],repo:url[2],num:Number(url[3]),url:gig.url,from:rename[1],to:rename[2],title:gig.title,amount:gig.amount,currency:gig.currency};
+ const url=ISSUE.exec(gig.url||'');const skill=parseInstruction(gig.title,gig.summary);
+ if(!url||!skill)return null;
+ return {owner:url[1],repo:url[2],num:Number(url[3]),url:gig.url,skill,title:gig.title,amount:gig.amount,currency:gig.currency};
 }
 export function transform(text,oldName,newName){
  let n=0;
@@ -69,21 +70,31 @@ export async function execute(task){
  const api='https://api.github.com/repos/'+task.owner+'/'+task.repo;
  const [repo,issue]=await Promise.all([source(api),source(api+'/issues/'+task.num)]);
  if(repo.private||repo.archived||repo.size>25000)throw Error('repo excluded');
- if(issue.state!=='open'||issue.comments>2||issue.locked||issue.assignee||issue.assignees?.length)throw Error('contested / closed issue');
+ if(issue.state!=='open'||issue.comments>30||issue.locked||issue.assignee||issue.assignees?.length)throw Error('contested / closed issue');
  if(issue.title.trim().toLowerCase()!==task.title.trim().toLowerCase())throw Error('source title mismatch');
  if(!issue.labels?.some(l=>/bounty|reward|paid/i.test(l.name)))throw Error('no reward label');
  if(COST.test(issue.body||''))throw Error('issue requires costs');
+ // Examine explicit competing claims and existing pull requests before doing work.
+ const [comments, pulls]=await Promise.all([
+   issue.comments ? source(api+'/issues/'+task.num+'/comments?per_page=100') : Promise.resolve([]),
+   source(api+'/pulls?state=open&per_page=100')
+ ]);
+ if(!Array.isArray(comments)||!Array.isArray(pulls))throw Error('competition cannot be verified');
+ if(comments.some(c=>/\/(?:claim|attempt)\b|\b(?:working on|already submitted|claimed by|claiming this)\b|\/pull\/\d+/i.test(String(c.body||''))))throw Error('another contributor has claimed or attempted issue');
+ const issueRef=new RegExp('(?:#'+task.num+'\\b|/issues/'+task.num+'\\b)','i');
+ if(pulls.some(p=>issueRef.test(String(p.title||'')+' '+String(p.body||''))))throw Error('competing pull request exists');
+
  const tmp=mkdtempSync(join(tmpdir(),'toyol-work-'));
  try{
   const root=join(tmp,'repo');
   git(['clone','--quiet','--depth','1','--','https://github.com/'+task.owner+'/'+task.repo+'.git',root],tmp);
-  const solved=solveFolder(root,task.from,task.to);
+  const solved=applyInstruction(root,task.skill);
   git(['diff','--check'],root);
   const diff=git(['diff','--','src','lib','docs','app','packages'],root);
   if(!diff.startsWith('diff --git ')||diff.length>100000)throw Error('invalid patch');
   mkdirSync('out/stage2',{recursive:true});
   writeFileSync('out/stage2/solution.patch',diff+'\n');
-  const manifest={status:'PATCH_PREPARED_NOT_SUBMITTED',issue:task.url,advertised_reward:task.amount+' '+task.currency,files:solved.files,replacements:solved.count,patch_sha256:createHash('sha256').update(diff).digest('hex'),checks:['issue open and bounty-labelled','no assigned party or high comment count','git diff --check'],not_verified:['project test suite','maintainer acceptance','payout'],created_at:new Date().toISOString()};
+  const manifest={status:'PATCH_PREPARED_NOT_SUBMITTED',issue:task.url,advertised_reward:task.amount+' '+task.currency,files:solved.files,replacements:solved.count,skill:solved.skill,patch_sha256:createHash('sha256').update(diff).digest('hex'),checks:['issue open and bounty-labelled','no assigned party or high comment count','git diff --check'],not_verified:['project test suite','maintainer acceptance','payout'],created_at:new Date().toISOString()};
   writeFileSync('out/stage2/manifest.json',JSON.stringify(manifest,null,2));
   return manifest;
  }finally{rmSync(tmp,{recursive:true,force:true});}
@@ -93,10 +104,15 @@ export async function main(){
  const {shortlist}=await import('./toyol.mjs');
  const tasks=shortlist(feed.items,1000).map(plan).filter(Boolean).slice(0,6);
  let message='## Toyol Stage 2 — bounded problem solving\n';
- let result=null;
- for(const t of tasks){try{result=await execute(t);break;}catch(e){console.log('Skipped '+t.url+': '+sanitize(e.message));}}
- if(result)message+='A concrete patch was prepared for '+result.issue+'. **Not yet submitted, accepted or paid.** See Stage 2 run artifact.\n';
- else message+='No open, unclaimed, small mechanical code fix was safely solved in this run. No external submission or income.\n';
+ let result=null;const failures=[];
+ for(const t of tasks){
+   try{result=await execute(t);break;}
+   catch(e){failures.push({url:t.url,reason:sanitize(e.message,100)});console.log('Skipped '+t.url+': '+sanitize(e.message));}
+ }
+ mkdirSync('out/stage2',{recursive:true});
+ writeFileSync('out/stage2/scan-result.json',JSON.stringify({checked:tasks.length,found:!!result,failures,issue:result?.issue||null,earned_amount:0},null,2));
+ if(result)message+='A bounded source patch was prepared for '+result.issue+'. **Not submitted, accepted or paid.** See Stage 2 run artifact.\n';
+ else message+='Inspected '+tasks.length+' eligible instruction(s). No verified patch produced. No external submission or income.\n';
  console.log(message);
  if(process.env.GITHUB_STEP_SUMMARY)appendFileSync(process.env.GITHUB_STEP_SUMMARY,message);
  return result;

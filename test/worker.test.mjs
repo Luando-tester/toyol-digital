@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {plan,transform,solveFolder} from '../src/worker.mjs';
 const gig=(overrides={})=>({source:'algora',currency:'USD',amount:3,title:'Rename oldProp to newProp',summary:'Mechanical source rename',url:'https://github.com/abc/widget/issues/16',...overrides});
 test('recognizes explicit code rename only',()=>{
- assert.equal(plan(gig())?.from,'oldProp');
+ assert.equal(plan(gig())?.skill.from,'oldProp');
  assert.equal(plan(gig({title:'Build an app'})),null);
  assert.equal(plan(gig({summary:'deposit required'})),null);
  assert.equal(plan(gig({url:'https://example.net/task/1'})),null);

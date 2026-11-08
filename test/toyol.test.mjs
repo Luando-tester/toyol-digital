@@ -32,6 +32,8 @@ test('human gigs and unsafe links excluded', () => {
 test('deposit and social-post offers excluded', () => {
   assert.equal(parseGig(fixture({ title: 'Deposit USDC to qualify' })), null);
   assert.equal(parseGig(fixture({ title: 'Post on Reddit to earn money' })), null);
+  assert.equal(parseGig(fixture({ content_text: 'Create and fully fund a child bounty' })), null);
+  assert.equal(parseGig(fixture({ title: 'Capture a macOS Safari evidence bundle' })), null);
 });
 test('expired gigs excluded', () => {
   assert.equal(parseGig(fixture({ _jobbi: { ...fixture()._jobbi, expires: '2020-01-01' } })), null);

@@ -37,3 +37,11 @@ test('TS and Markdown are explicitly limited, not falsely certified',()=>{
   assert.ok(results.every(x=>x.result==='limited'));
  }finally{rmSync(root,{recursive:true,force:true});}
 });
+
+test('Node parser must reject unterminated function body that file-mode --check can miss',()=>{
+ const root=mkdtempSync(join(tmpdir(),'toyol-unclosed-'));
+ try{
+  writeFileSync(join(root,'broken.mjs'),'export function add(a,b) { return { }\n');
+  assert.throws(()=>staticValidate(root,['broken.mjs']),/syntax check failed/);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});

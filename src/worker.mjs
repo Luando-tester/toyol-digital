@@ -5,6 +5,7 @@ import { join, relative } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { parseInstruction, applyInstruction } from './skills.mjs';
+import { parseExtra, applyExtra } from './skills-plus.mjs';
 
 const ISSUE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)(?:[/?#].*)?$/;
 const TOKEN='[A-Za-z_$][A-Za-z0-9_$]{2,59}';
@@ -18,7 +19,7 @@ const sanitize=(x,n=160)=>String(x??'').replace(/[\x00-\x1f\x7f]/g,' ').trim().s
 export function plan(gig){
  if(!gig||!['algora','issuehunt','bountyhub','opire'].includes(gig.source))return null;
  if(!['USD','USDC'].includes(gig.currency)||!(Number(gig.amount)>0)||COST.test(gig.title+' '+gig.summary))return null;
- const url=ISSUE.exec(gig.url||'');const skill=parseInstruction(gig.title,gig.summary);
+ const url=ISSUE.exec(gig.url||'');const skill=parseInstruction(gig.title,gig.summary) || parseExtra(gig.title);
  if(!url||!skill)return null;
  return {owner:url[1],repo:url[2],num:Number(url[3]),url:gig.url,skill,title:gig.title,amount:gig.amount,currency:gig.currency};
 }
@@ -60,7 +61,7 @@ export function solveFolder(root,oldName,newName){
 function git(args,cwd){return execFileSync('git',args,{cwd,encoding:'utf8',timeout:30000,env:{...process.env,GH_TOKEN:'',GITHUB_TOKEN:'',GIT_TERMINAL_PROMPT:'0'}}).trim();}
 export function collectPatch(root){
  git(['diff','--check'],root);
- const diff=git(['diff','--','README.md','src','lib','docs','app','packages'],root);
+ const diff=git(['diff','--','README.md','.gitignore','src','lib','docs','app','packages','data','fixtures','datasets'],root);
  if(!diff.startsWith('diff --git ')||diff.length>100000)throw Error('invalid patch');
  return diff;
 }
@@ -94,7 +95,7 @@ export async function execute(task){
  try{
   const root=join(tmp,'repo');
   git(['clone','--quiet','--depth','1','--','https://github.com/'+task.owner+'/'+task.repo+'.git',root],tmp);
-  const solved=applyInstruction(root,task.skill);
+  const solved=task.skill.path ? applyExtra(root,task.skill) : applyInstruction(root,task.skill);
   const diff=collectPatch(root);
   mkdirSync('out/stage2',{recursive:true});
   writeFileSync('out/stage2/solution.patch',diff+'\n');

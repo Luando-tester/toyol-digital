@@ -2,7 +2,7 @@
  * Toyol Digital v0.1 — read-only zero-cash public bounty radar.
  * No claim, submission, purchase, wallet, or earned-income assertions.
  */
-import { appendFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 
 export const FEED_URL = 'https://jobbi.org/gigs.json?lane=agent&limit=1000';
 const REPO = 'ilhamraduanbis-source/toyol-digital';
@@ -124,6 +124,8 @@ export async function main() {
     if (!res.ok) throw new Error('Jobbi HTTP ' + res.status);
     const feed = await res.json();
     if (!Array.isArray(feed.items)) throw new Error('Feed items array missing');
+    mkdirSync('out', { recursive: true });
+    writeFileSync('out/feed.json', JSON.stringify({items: feed.items}), 'utf8');
     const gigs = shortlist(feed.items);
     const report = formatReport(gigs, new Date().toISOString());
     console.log(report);

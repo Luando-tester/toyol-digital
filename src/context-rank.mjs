@@ -40,6 +40,7 @@ export function rankEvidence(paths,title,body=''){
    }
    if((/readme|documentation|docs/i.test(issue))&&/^(?:README\.md|docs\/)/i.test(path))score+=7;
    if(/^(test|tests)\//.test(path)&&score>0)score+=2;
+   if(safeFile(path)&&score>0)score+=6;
    return {path,score,editable:safeFile(path)};
   })
   .filter(x=>x.score>0)

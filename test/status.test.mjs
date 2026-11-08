@@ -36,3 +36,15 @@ test('displays market gap without claiming advertised payouts',()=>{
   assert.match(t,/Jurang besar/);
   assert.match(t,/Pendapatan disahkan: \*\*RM0\*\*/);
 });
+
+test('quest board distinguishes extra skills and provisional source inspection from earnings',()=>{
+ const s=formatStatus({checked:2,found:false,failures:[]},{
+   audit:{total_feed_items:659,passed_initial_safety_filters:273,matching_automated_skills:1},
+   intel:{sources_checked:4,conditional_candidates:1,rejected:2,unverified:1},
+   event:'workflow_dispatch'
+ });
+ assert.match(s,/Kemahiran pembetulan khusus dipasang: \*\*11\*\*/);
+ assert.match(s,/Calon bersyarat: \*\*1\*\*/);
+ assert.match(s,/Ditolak: \*\*2\*\*/);
+ assert.match(s,/Pendapatan disahkan: \*\*RM0\*\*/);
+});

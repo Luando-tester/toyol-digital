@@ -82,7 +82,7 @@ Pelaksana akan menolak arahan yang kabur atau tidak boleh dibuktikan, cubaan men
 - **Quest Intelligence** (`src/quest-intel.mjs`): membaca API isu GitHub awam secara terhad untuk memeriksa status, tuntutan pesaing, tanda bayaran, usia isu, syarat kerja manusia, dan keperluan deposit. Hasil direkod sebagai bukti dalam `out/intelligence/`. Status lulus masih *bersyarat*, bukan kebenaran menghantar kerja.
 - **Static Validation** (`src/static-check.mjs`): menyemak sintaks JavaScript, Python dan JSON tanpa menjalankan program atau memasang dependencies daripada repo orang lain. TypeScript/JSX/Markdown hanya diberi pemeriksaan terhad dan tidak didakwa lulus ujian projek.
 
-**Bukti terkini: 48 daripada 48 ujian Github Actions lulus.** Workflow `push` menjalankan ujian sahaja, dan `scan` sengaja tidak dijalankan pada push bagi menghormati had suapan. Pemeriksaan penuh quest intelligence hanya boleh dibuktikan selepas run `schedule` atau `workflow_dispatch` berikutnya.
+**Bukti terkini: 49 daripada 49 ujian GitHub Actions lulus.** Workflow `push` menjalankan ujian sahaja, dan `scan` sengaja tidak dijalankan pada push bagi menghormati had suapan. Pemeriksaan penuh quest intelligence hanya boleh dibuktikan selepas run `schedule` atau `workflow_dispatch` berikutnya.
 
 **Penilaian pasaran sebelumnya (659 item, hanya 1 padanan) tidak boleh dianggap bertambah hanya kerana bilangan kemahiran meningkat.** Padanan baharu akan diukur oleh `src/market.mjs` dalam run imbasan seterusnya.
 

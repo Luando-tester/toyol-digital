@@ -10,10 +10,12 @@ on:
       - 'src/worker.mjs'
       - 'src/skills.mjs'
       - 'src/status.mjs'
+      - 'src/market.mjs'
       - 'test/toyol.test.mjs'
       - 'test/worker.test.mjs'
       - 'test/skills.test.mjs'
       - 'test/status.test.mjs'
+      - 'test/market.test.mjs'
       - '.github/workflows/toyol.yml'
 permissions:
   contents: read
@@ -36,6 +38,8 @@ jobs:
         run: node src/toyol.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Audit whether real gigs match Toyol abilities
+        run: node src/market.mjs
       - name: Attempt bounded bounty code fix
         run: node src/worker.mjs
         env:
@@ -47,7 +51,9 @@ jobs:
       - name: Preserve any prepared patch for review
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: toyol-stage2-solution
-          path: out/stage2/
+          name: toyol-run-evidence
+          path: |
+            out/stage2/
+            out/market/
           if-no-files-found: ignore
           retention-days: 7

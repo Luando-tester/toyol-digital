@@ -8,8 +8,10 @@ on:
     paths:
       - 'src/toyol.mjs'
       - 'src/worker.mjs'
+      - 'src/skills.mjs'
       - 'test/toyol.test.mjs'
       - 'test/worker.test.mjs'
+      - 'test/skills.test.mjs'
       - '.github/workflows/toyol.yml'
 permissions:
   contents: read

@@ -3,7 +3,7 @@
  * Does not claim, comment on, submit PRs to, or interact financially with
  * third-party services. A locally generated diff is NOT completed paid work.
  */
-import {mkdtempSync,mkdirSync,rmSync,writeFileSync,readFileSync,statSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,rmSync,writeFileSync,readFileSync,statSync,appendFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,basename} from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -113,6 +113,16 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
  }catch(e){manifest.status='QUEST_SOURCE_UNAVAILABLE';manifest.error=String(e.message).slice(0,130);}
  writeFileSync('out/brain/quest-evidence.json',JSON.stringify(manifest,null,2));
  console.log('Toyol AI quest bridge:',manifest.status,'; candidates:',manifest.sampled_quest_count,'; earned RM0');
+ for(const item of manifest.evaluated.slice(0,5))console.log('Rejected',item.url,':',item.reason);
+ if(process.env.GITHUB_STEP_SUMMARY){
+  const lines=['## AI Quest Draft (local model)','',
+    '- Candidates checked: **'+manifest.sampled_quest_count+'**',
+    '- Final result: **'+manifest.status+'**',
+    '- Real submissions: **0** | Accepted jobs: **0** | Verified earnings: **RM0**','',''];
+  for(const x of manifest.evaluated.slice(0,5))lines.push('- '+x.url+' — '+x.reason);
+  lines.push('','Local-model drafts are not proof of payment or permission to send work.');
+  appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join('\n')+'\n','utf8');
+ }
  return manifest;
 }
 if(process.argv[1]?.endsWith('brain-quest.mjs'))main().catch(e=>{console.error(e.message);process.exitCode=1;});

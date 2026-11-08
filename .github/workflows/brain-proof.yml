@@ -68,7 +68,7 @@ jobs:
           fi
           if [ "${{ github.event_name }}" = "push" ]; then
             node src/brain-smoke.mjs
-            echo 'Running corrected isolated acceptance benchmark; errors in test setup will be labeled unverified.'
+            echo 'AI validation v0.8: grammar-constrained JSON, grounded edits, hidden behavioral tests, at most two retries.'
             node src/brain-benchmark.mjs
           fi
           node src/brain-quest.mjs

@@ -15,9 +15,9 @@ export function staticValidate(root,files){
   if(!path.startsWith(base+sep)||!existsSync(path)||!statSync(path).isFile()||statSync(path).size>120000)throw Error('unsafe file');
   const ext=extname(path).toLowerCase();
   if(['.js','.mjs','.cjs'].includes(ext)){
-   try{execFileSync(process.execPath,['--check',path],{timeout:8000,encoding:'utf8',stdio:'pipe'});}
+   try{execFileSync(process.execPath,['--check','--input-type=module'],{input:readFileSync(path,'utf8'),timeout:8000,encoding:'utf8',stdio:'pipe'});}
    catch{throw Error('JavaScript syntax check failed');}
-   checks.push({file:rel,validator:'node --check',result:'pass'});
+   checks.push({file:rel,validator:'node --check --input-type=module (stdin)',result:'pass'});
   }else if(ext==='.py'){
    // AST parsing only; the Python source itself is never executed.
    try{execFileSync('python3',['-c','import ast,sys;ast.parse(open(sys.argv[1],encoding="utf-8").read())',path],{timeout:8000,encoding:'utf8',stdio:'pipe'});}

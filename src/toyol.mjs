@@ -37,6 +37,9 @@ export function parseGig(item, now = Date.now()) {
   const source = clean(m.source || 'unknown', 40);
   const grade = clean(m.payout_grade, 12);
   if (!id || !title || !url || clean(m.lane).toLowerCase() !== 'agent') return null;
+  // A listed reward is not useful unless it describes some actionable work.
+  if (title.length < 14 && summary.length < 60) return null;
+  if (!/\b(fix|implement|add|remove|rename|replace|update|write|build|refactor|create|migrate|test|document|resolve|improve|convert|correct|repair|support|capture|extract|parse|validate|integrate)\b/i.test(title + ' ' + summary)) return null;
   if (!Number.isFinite(amount) || amount <= 0 || !['USD','USDC'].includes(currency)) return null;
   if (disallowed.test(title + ' ' + summary) || m.claims_open === false) return null;
   if (m.expires && (!Number.isFinite(Date.parse(m.expires)) || Date.parse(m.expires) < now)) return null;

@@ -57,6 +57,8 @@ export function runIsolatedTests(dir,{run=execFileSync}={}){
   if(e.code==='ENOENT')return {pass:false,infra:true,feedback:'Docker is not installed'};
   if(e.killed)return {pass:false,infra:true,feedback:'isolated test runner timeout'};
   const details=String(e.stdout||'')+'\n'+String(e.stderr||'');
+  if(/Could not find ['\"]?tests\/acceptance\.test\.mjs|EACCES|permission denied|Cannot connect to the Docker daemon|pull access denied/i.test(details))
+   return {pass:false,infra:true,feedback:'isolated benchmark fixture or container inaccessible'};
   return {pass:false,feedback:feedbackMessage(details)};
  }
 }

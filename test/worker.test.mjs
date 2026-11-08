@@ -53,3 +53,30 @@ test('actual git patch captures root README fix (previously silently excluded)',
   assert.match(patch,/-A documnt has a typo/);
  } finally {rmSync(root,{recursive:true,force:true});}
 });
+
+test('worker routes docs and data jobs into the expanded skill pack',()=>{
+ const docs=plan(gig({title:'Fix broken markdown link https://old.example to https://new.example in README.md'}));
+ assert.equal(docs?.skill.kind,'markdown-link');
+ const data=plan(gig({title:'Set enabled to false in data/config.json'}));
+ assert.equal(data?.skill.kind,'json-field');
+ const csv=plan(gig({title:'Rename CSV column full_name to name in data/users.csv'}));
+ assert.equal(csv?.skill.kind,'csv-column');
+});
+test('git exports real data and .gitignore patches from expanded skills',()=>{
+ const root=mkdtempSync(join(tmpdir(),'toyol-multi-integration-'));
+ const git=(args)=>execFileSync('git',args,{cwd:root,stdio:'pipe',timeout:10000});
+ try {
+  git(['init','--quiet']);
+  mkdirSync(join(root,'data'));
+  writeFileSync(join(root,'data','users.csv'),'id,full_name\n1,Sam\n');
+  writeFileSync(join(root,'.gitignore'),'node_modules/\n');
+  git(['add','.gitignore','data/users.csv']);
+  git(['-c','user.name=ToyolTest','-c','user.email=test@example.invalid','commit','--quiet','-m','fixture']);
+  const {parseExtra,applyExtra}=await import('../src/skills-plus.mjs');
+  applyExtra(root,parseExtra('Rename CSV column full_name to name in data/users.csv'));
+  applyExtra(root,parseExtra('Add *.log to .gitignore'));
+  const patch=collectPatch(root);
+  assert.match(patch,/diff --git a\/data\/users\.csv b\/data\/users\.csv/);
+  assert.match(patch,/diff --git a\/\.gitignore b\/\.gitignore/);
+ } finally {rmSync(root,{recursive:true,force:true});}
+});

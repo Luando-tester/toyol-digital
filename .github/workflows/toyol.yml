@@ -24,7 +24,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run Toyol safety and patch tests
-        run: node --test
+        run: node --test test/*.test.mjs
 
   scan:
     # Critical: pushes run tests ONLY. Public Jobbi feed must not be polled more than hourly.

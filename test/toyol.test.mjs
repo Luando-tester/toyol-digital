@@ -45,3 +45,13 @@ test('duplicate IDs removed, report clearly says no earnings', () => {
   assert.match(report, /BUKAN PENDAPATAN/);
   assert.match(report, /tidak menuntut tugasan/);
 });
+
+test('rejects tiny empty descriptions and non-actionable listings', () => {
+  assert.equal(parseGig(fixture({ title: 'first', content_text: 'first' })), null);
+  assert.equal(parseGig(fixture({ title: '242421', content_text: '242421' })), null);
+  assert.equal(parseGig(fixture({ title: 'A reward for something', content_text: 'The reward is available and anyone can collect it.' })), null);
+});
+test('keeps explicit tasks even with low advertised rewards', () => {
+  const gig = parseGig(fixture({ title: 'Fix README typo', content_text: 'Fix the typo in the documentation', _jobbi: { ...fixture()._jobbi, reward: {amount:0.01,currency:'USD'} }}));
+  assert.equal(gig?.amount,0.01);
+});

@@ -3,7 +3,7 @@
  * Model output is untrusted. Only allowlisted existing files can be edited.
  * Generated shell commands or remote operations are never executed.
  */
-import {readFileSync, writeFileSync, lstatSync} from 'node:fs';
+import {readFileSync, writeFileSync, lstatSync, realpathSync} from 'node:fs';
 import {resolve, sep} from 'node:path';
 import {staticValidate} from './static-check.mjs';
 
@@ -22,7 +22,7 @@ export function collectContext(root,paths,limit=6){
  for(const p of paths.slice(0,limit)){
   if(!safeFile(p))throw Error('unsafe source path');
   const full=resolve(root,p),base=resolve(root);
-  if(!full.startsWith(base+sep)||lstatSync(full).isSymbolicLink())throw Error('unsafe source');
+  if(!full.startsWith(base+sep)||lstatSync(full).isSymbolicLink()||!realpathSync(full).startsWith(realpathSync(base)+sep))throw Error('unsafe source');
   const source=readFileSync(full,'utf8');
   if(source.length>6000||source.includes('\u0000')||source.includes('\uFFFD'))throw Error('oversize/nontext file');
   files[p]=source;
@@ -74,7 +74,7 @@ export function applyProposal(root,allowedFiles,proposal){
  for(const edit of proposal.edits){
   if(!Object.hasOwn(allowedFiles,edit.path)||!safeFile(edit.path))throw Error('file not in approved context');
   const file=resolve(root,edit.path),base=resolve(root);
-  if(!file.startsWith(base+sep)||lstatSync(file).isSymbolicLink())throw Error('unsafe path');
+  if(!file.startsWith(base+sep)||lstatSync(file).isSymbolicLink()||!realpathSync(file).startsWith(realpathSync(base)+sep))throw Error('unsafe path');
   const before=readFileSync(file,'utf8');
   if(before!==allowedFiles[edit.path])throw Error('file changed since model context');
   if(before.split(edit.search).length!==2)throw Error('search is absent or nonunique');

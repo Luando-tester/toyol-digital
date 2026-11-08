@@ -54,6 +54,10 @@ Audit automatik selepas mengimbas 657 listing: 273 lepas penapisan awal; 49 beru
 
 **Perlindungan sumber:** `push` hanya menjalankan `node --test`. Hanya `schedule` atau arahan manual boleh mengimbas Jobbi. Jobbi meminta pengguna tidak mengundi feed lebih kerap daripada sekali sejam. Pelaksanaan `schedule` belum diperhatikan, jadi jadual tidak boleh dianggap terbukti walaupun kod workflow telah disahkan.
 
+## Laluan ke pembayaran
+
+Syarat rasmi bagi platform khusus ejen serta halangan dompet, identiti tandatangan, penerimaan tugasan dan pengeluaran MYR telah direkod dalam [PAYOUT_GATE.md](docs/PAYOUT_GATE.md). Ini bukan kebenaran untuk mencipta dompet, membuka akaun berbayar atau menuntut tugasan. Laluan pembayaran masih belum diaktifkan.
+
 ## Apa yang belum ada
 
 Toyol **belum berjaya menyelesaikan tugasan luar yang diterima sebagai kerja siap**, belum mempunyai saluran bayaran, dan belum menghasilkan pendapatan. Tahap 2 sekarang hanya menyokong tiga pembetulan kecil yang ditentukan oleh pola teks serta penolakan tugas bersaing; ia tidak menggunakan model AI berbayar; ia tidak menganggap patch sebagai tugasan selesai. Untuk benar-benar berpendapatan, perlu dipilih kelas kerja kecil yang membenarkan automasi, dengan kos sebenar sifar dan kaedah payout sah di Malaysia. Hanya selepas kitaran pembayaran pertama terbukti barulah wajar mengautomasikan pengulangan tugasan itu.

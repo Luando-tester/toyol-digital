@@ -83,8 +83,9 @@ export async function solveScenario(scenario,{
    if(feedback)messages.push({role:'user',content:'Previous attempt failed independent acceptance tests. Their diagnostic summary follows. Propose a different minimal edit AGAINST THE ORIGINAL SOURCE, not the previous modified file. Test files are private and must never be edited. Feedback:\n'+feedback});
    let entry={attempt:n,proposal:'not_generated'};
    try{
-    const proposal=await model(messages);
+    const proposal=await model(messages,{onRaw:raw=>{entry.model_output_excerpt=feedbackMessage(raw).slice(0,750);}});
     entry.proposal=proposal?.edits?.length ? 'candidate' : 'abstained';
+    entry.search_previews=(proposal?.edits||[]).map(e=>({path:e.path,search:String(e.search).slice(0,250),replace:String(e.replace).slice(0,250)}));
     if(!proposal?.edits?.length)throw Error('model chose no solution');
     const patch=applyProposal(root,original,proposal);
     entry.static_checks=patch.validation;

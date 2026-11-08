@@ -1,4 +1,4 @@
-name: Toyol Radar (RM0)
+name: Toyol Radar and Stage 2 (RM0)
 on:
   workflow_dispatch:
   schedule:
@@ -7,7 +7,9 @@ on:
     branches: [main]
     paths:
       - 'src/toyol.mjs'
+      - 'src/worker.mjs'
       - 'test/toyol.test.mjs'
+      - 'test/worker.test.mjs'
       - '.github/workflows/toyol.yml'
 permissions:
   contents: read
@@ -22,9 +24,22 @@ jobs:
     steps:
       - name: Checkout Toyol repository only
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Verify Toyol filters
+        with:
+          persist-credentials: false
+      - name: Verify Toyol Stage 1 and Stage 2 safeguards
         run: node --test
       - name: Scan public bounty feed
         run: node src/toyol.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Attempt bounded bounty code fix
+        run: node src/worker.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Preserve any prepared patch for review
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: toyol-stage2-solution
+          path: out/stage2/
+          if-no-files-found: ignore
+          retention-days: 7

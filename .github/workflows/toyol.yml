@@ -2,16 +2,18 @@ name: Toyol Radar and Stage 2 (RM0)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17,47 * * * *'
+    - cron: '23,53 * * * *'
   push:
     branches: [main]
     paths:
       - 'src/toyol.mjs'
       - 'src/worker.mjs'
       - 'src/skills.mjs'
+      - 'src/status.mjs'
       - 'test/toyol.test.mjs'
       - 'test/worker.test.mjs'
       - 'test/skills.test.mjs'
+      - 'test/status.test.mjs'
       - '.github/workflows/toyol.yml'
 permissions:
   contents: read
@@ -36,6 +38,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Attempt bounded bounty code fix
         run: node src/worker.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Write verified progress to Toyol Quest Board
+        run: node src/status.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Preserve any prepared patch for review

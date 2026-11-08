@@ -50,7 +50,12 @@ test('invalid syntax is rolled back',()=>fixture(root=>{
 }));
 test('talks only to a localhost model, accepts mocked JSON response',async()=>{
  const response=await queryLocalModel([{role:'user',content:'test'}],{
-   fetchFn:async()=>({ok:true,json:async()=>({choices:[{message:{content:'{"edits":[]}'} }]})})
+   fetchFn:async(_url,options)=>{
+    const payload=JSON.parse(options.body);
+    assert.equal(payload.response_format.type,'json_schema');
+    assert.deepEqual(payload.response_format.schema.required,['edits']);
+    return {ok:true,json:async()=>({choices:[{message:{content:'{"edits":[]}'} }]})};
+   }
  });
  assert.deepEqual(response,{edits:[]});
  await assert.rejects(()=>queryLocalModel([],{endpoint:'https://example.com/v1/chat/completions'}),/local/);
@@ -66,3 +71,11 @@ test('rejects public repo parent-directory symlinks pointing outside checkout',(
   assert.throws(()=>collectContext(join(home,'source'),['src/escape.js']),/unsafe source/);
  }finally{rmSync(home,{recursive:true,force:true});}
 });
+
+test('anchors whitespace-only model search differences to one real source span',()=>fixture(root=>{
+ const files=collectContext(root,['src/calc.js']);
+ const proposal=parseProposal('{"edits":[{"path":"src/calc.js","search":"return a   -   b;","replace":"return a + b;"}]}');
+ const result=applyProposal(root,files,proposal);
+ assert.equal(result.files.length,1);
+ assert.match(readFileSync(join(root,'src','calc.js'),'utf8'),/return a \+ b;/);
+}));

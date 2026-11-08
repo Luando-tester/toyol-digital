@@ -1,4 +1,4 @@
-name: Toyol AI Brain — Local Model and Daily Quest Draft (RM0)
+name: Toyol AI Brain — Behavioral Quality Proof + Daily Quest (RM0)
 on:
   workflow_dispatch:
   schedule:
@@ -68,6 +68,7 @@ jobs:
           fi
           if [ "${{ github.event_name }}" = "push" ]; then
             node src/brain-smoke.mjs
+            node src/brain-benchmark.mjs
           fi
           node src/brain-quest.mjs
       - name: Preserve model proof, whether succeeded or failed

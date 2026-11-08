@@ -2,7 +2,8 @@
  * Toyol v0.4: honest, persistent quest-status display.
  * Never posts to third-party issues, never submits patches or implies earnings.
  */
-import { readFileSync, appendFileSync } from 'node:fs';
+import { readFileSync, appendFileSync, existsSync } from 'node:fs';
+import { extraSkillNames } from './skills-plus.mjs';
 
 const REPO = 'ilhamraduanbis-source/toyol-digital';
 const MARKER = '<!-- toyol-stage2-status -->';
@@ -25,6 +26,7 @@ export function formatStatus(report, opts={}) {
     '',
     '- Imbasan: '+safe(opts.time || 'tidak diketahui'),
     '- Pencetus: **'+event+'**',
+    '- Kemahiran pembetulan khusus dipasang: **'+(3+extraSkillNames.length)+'**',
     '- Quest arahan khusus yang diperiksa: **'+checked+'**',
     '- Patch luar dihasilkan: **'+(found?'1':'0')+'**',
     '- Patch diserahkan: **0** | Kerja diterima: **0** | Pendapatan disahkan: **RM0**',
@@ -40,6 +42,12 @@ export function formatStatus(report, opts={}) {
       '- Serasi dengan kemahiran Toyol: **'+matches+'**');
     if(matches <= 1)lines.push('- **Jurang besar:** kemahiran Toyol hampir tiada padanan; pencarian lebih kerap bukan penyelesaiannya.');
   }
+  const intel = opts.intel && typeof opts.intel === 'object' ? opts.intel : null;
+  if(intel)lines.push('','### Semakan sumber asal','',
+    '- Isu diperiksa: **'+(intel.sources_checked||0)+'**',
+    '- Calon bersyarat: **'+(intel.conditional_candidates||0)+'**',
+    '- Ditolak: **'+(intel.rejected||0)+'**',
+    '- Tidak dapat disahkan: **'+(intel.unverified||0)+'**');
   if(link) lines.push('- Bukti pelaksanaan: '+link);
   if(found && typeof report.issue==='string' && /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/\d+$/.test(report.issue)) {
     lines.push('- Tugasan sumber: '+report.issue);
@@ -60,11 +68,13 @@ export function mergeStatus(body,status){
 async function main(){
   const report = JSON.parse(readFileSync('out/stage2/scan-result.json','utf8'));
   const audit = JSON.parse(readFileSync('out/market/fit.json','utf8'));
+  const intel = existsSync('out/intelligence/quest-check.json') ? JSON.parse(readFileSync('out/intelligence/quest-check.json','utf8')) : null;
   const reportText = formatStatus(report,{
     event:process.env.GITHUB_EVENT_NAME,
     runId:process.env.GITHUB_RUN_ID,
     time:new Date().toISOString(),
-    audit
+    audit,
+    intel
   });
   console.log(reportText);
   if(process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,reportText+'\n','utf8');

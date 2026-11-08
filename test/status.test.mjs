@@ -25,3 +25,14 @@ test('replaces prior status rather than duplicating it',()=>{
  assert.doesNotMatch(merged,/push \(perubahan kod\)/);
  assert.match(merged,/schedule \(cron\)/);
 });
+
+test('displays market gap without claiming advertised payouts',()=>{
+  const t=formatStatus({checked:1,found:false},{
+    event:'schedule',
+    audit:{total_feed_items:657,passed_initial_safety_filters:273,matching_automated_skills:1}
+  });
+  assert.match(t,/Tugasan diindeks: \*\*657\*\*/);
+  assert.match(t,/Serasi dengan kemahiran Toyol: \*\*1\*\*/);
+  assert.match(t,/Jurang besar/);
+  assert.match(t,/Pendapatan disahkan: \*\*RM0\*\*/);
+});

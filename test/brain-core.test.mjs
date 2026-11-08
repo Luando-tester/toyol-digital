@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync,symlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {safeFile,collectContext,makeMessages,parseProposal,applyProposal,queryLocalModel} from '../src/brain-core.mjs';
@@ -54,4 +54,15 @@ test('talks only to a localhost model, accepts mocked JSON response',async()=>{
  });
  assert.deepEqual(response,{edits:[]});
  await assert.rejects(()=>queryLocalModel([],{endpoint:'https://example.com/v1/chat/completions'}),/local/);
+});
+
+test('rejects public repo parent-directory symlinks pointing outside checkout',()=>{
+ const home=mkdtempSync(join(tmpdir(),'toyol-symlink-'));
+ try{
+  mkdirSync(join(home,'source'));
+  mkdirSync(join(home,'outside'));
+  writeFileSync(join(home,'outside','escape.js'),'const secret=123;');
+  symlinkSync(join(home,'outside'),join(home,'source','src'));
+  assert.throws(()=>collectContext(join(home,'source'),['src/escape.js']),/unsafe source/);
+ }finally{rmSync(home,{recursive:true,force:true});}
 });

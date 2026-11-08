@@ -140,7 +140,7 @@ export async function main(){
   for(const a of outcome.attempts)if(a.reason)console.log(' - attempt',a.attempt,':',a.reason.slice(0,130));
  }
  const metrics=score(results);
- const report={kind:'CONTROLLED_OFFLINE_AI_QUALITY_BENCHMARK',metrics,results,...manifestBase,created_at:new Date().toISOString()};
+ const report={kind:'CONTROLLED_OFFLINE_AI_QUALITY_BENCHMARK',model_id:process.env.TOYOL_MODEL_ID||'LOCAL_MODEL_UNSPECIFIED',metrics,results,...manifestBase,created_at:new Date().toISOString()};
  writeFileSync('out/brain/benchmarks/report.json',JSON.stringify(report,null,2));
  const markdown=[
   '## Toyol AI Quality — Independent Behavioral Tests','',

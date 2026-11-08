@@ -8,7 +8,8 @@ import {tmpdir} from 'node:os';
 import {join,basename} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {safeFile,collectContext,makeMessages,queryLocalModel,applyProposal} from './brain-core.mjs';
+import {collectContext,makeMessages,queryLocalModel,applyProposal} from './brain-core.mjs';
+import {rankEvidence,chooseEvidence} from './context-rank.mjs';
 import {collectPatch} from './worker.mjs';
 import {evaluate} from './quest-intel.mjs';
 
@@ -36,19 +37,7 @@ export function questUrls(text){
  return [...new Set([...matches].map(x=>x[1]))].slice(0,12);
 }
 export function rankFilePaths(paths,title,body=''){
- const task=String(title+' '+body).toLowerCase();
- const words=new Set(task.match(/[a-z][a-z0-9_-]{3,}/g)||[]);
- return paths.filter(safeFile).filter(x=>!/(?:lock|generated|vendor|dist|build|node_modules)/i.test(x)).map(path=>{
-  const name=basename(path).toLowerCase();
-  let score=0;
-  if(task.includes(path.toLowerCase()))score+=90;
-  for(const w of name.split(/[^a-z0-9]+/))if(w.length>3&&words.has(w))score+=12;
-  if(path.startsWith('src/'))score+=6;
-  if(path.startsWith('test/')||path.startsWith('tests/'))score+=4;
-  if(path==='README.md')score+=2;
-  if(name==='package.json')score-=10;
-  return {path,score};
- }).sort((a,b)=>b.score-a.score||a.path.localeCompare(b.path)).map(x=>x.path);
+ return rankEvidence(paths,title,body).map(x=>x.path);
 }
 async function attempt(url){
  const m=ISSUE_RE.exec(url);
@@ -68,9 +57,10 @@ async function attempt(url){
   const root=join(work,'source');
   git(['clone','--quiet','--depth','1','--','https://github.com/'+m[1]+'/'+m[2]+'.git',root],work);
   const names=git(['ls-files'],root).split('\n').filter(Boolean);
-  const ranked=rankFilePaths(names,issue.title,issue.body||'');
+  const choice=chooseEvidence(names,issue.title,issue.body||'');
+  if(!choice.paths.length)throw Error('no issue-relevant editable source; abstaining');
   const chosen=[];
-  for(const path of ranked){
+  for(const path of choice.paths){
    if(chosen.length>=5)break;
    try{if(statSync(join(root,path)).size<=6000)chosen.push(path);}catch{}
   }

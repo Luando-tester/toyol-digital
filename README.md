@@ -2,6 +2,8 @@
 
 **Status v0.9: Qwen 3B QUEST-READY (terhad), bukan INCOME-READY. Kerja luar diterima: 0. Pendapatan disahkan: RM0.**
 
+**Naik taraf kompetensi (9 Nov 2026):** jumlah komen/PR pesaing tidak lagi menyebabkan penolakan automatik. Toyol membezakan kes keselamatan, keperluan pengesahan dan peluang yang masih boleh dicabar dengan bukti. Lihat [Competency Engine](docs/COMPETENCY_ENGINE.md). Ini **bukan** bukti patch luar sudah diterima.
+
 Toyol menyemak [suapan terbuka Jobbi](https://jobbi.org/gigs.json) secara berkala, mengasingkan tugasan untuk agen digital yang mengiklankan ganjaran USD/USDC, dan menyenarai pendek sehingga lapan calon. Ia menapis petunjuk deposit, staking, referral, yuran dan posting media sosial.
 
 Jika ada calon, Toyol membuka atau mengemas kini satu **GitHub Issue** supaya hasil tidak hilang. Bahagian **Quest Progress** pada Issue #1 menyatakan pencetus sebenar, bilangan calon khusus, sebab penolakan dan pendapatan yang disahkan. Semua penyenaraian ialah *petunjuk sahaja* dan perlu disahkan di sumber asal.
@@ -31,7 +33,7 @@ Toyol kini menjalankan `src/worker.mjs` selepas setiap imbasan radar. Ia boleh *
 
 1. Membaca feed radar tanpa membuat panggilan Jobbi kedua.
 2. Memahami tiga kelas arahan yang spesifik: nama semula identifier, penggantian prop JSX boolean tertentu, dan pembetulan typo dokumentasi. Bukan tugasan terbuka yang memerlukan pertimbangan AI.
-3. Memeriksa isu asal masih terbuka, belum diberikan kepada pihak lain, tidak ramai pesaing, tidak mempunyai tanda tuntutan dalam komen, tidak mempunyai pull request pesaing yang dipautkan, dan mempunyai label ganjaran.
+3. Memeriksa isu asal masih terbuka, belum diberikan kepada pihak lain, bukti persaingan dianalisis tanpa menolak berdasarkan bilangan komen atau PR pesaing semata-mata, dan mempunyai label ganjaran.
 4. Memuat turun kod awam ke komputer sementara GitHub; **tidak melaksanakan kod asing**.
 5. Menghasilkan pembetulan kecil dalam fail sumber yang dibenarkan dan memeriksa `git diff --check`.
 6. Jika berjaya, menyimpan `solution.patch` serta `manifest.json` sebagai artifact pada halaman GitHub Actions. Untuk setiap imbasan, fail `scan-result.json` merekod bilangan calon dan sebab penolakan.

@@ -1,4 +1,4 @@
-name: Toyol AI Brain — Behavioral Quality Proof + Daily Quest (RM0)
+name: Toyol AI Quest Runner — Qwen 3B Daily (RM0)
 on:
   workflow_dispatch:
   schedule:
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   real-ai-proof:
     runs-on: ubuntu-24.04
-    timeout-minutes: 18
+    timeout-minutes: 24
     steps:
       - name: Checkout Toyol code (no credentials)
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -35,15 +35,14 @@ jobs:
             --output "$RUNNER_TEMP/llama-cpu.tar.gz"
           tar -xzf "$RUNNER_TEMP/llama-cpu.tar.gz" -C "$RUNNER_TEMP/toyol-llama"
           find "$RUNNER_TEMP/toyol-llama" -name llama-server -type f
-      - name: Download Qwen official 1.5B coder model (no API key)
+      - name: Download official Qwen 3B coder model (no API key)
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --location --retry 2 --connect-timeout 20 --max-time 360 \
-            "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf?download=true" \
+          curl --fail --location --retry 2 --connect-timeout 20 --max-time 550 \
+            "https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct-GGUF/resolve/main/qwen2.5-coder-3b-instruct-q4_k_m.gguf?download=true" \
             --output "$RUNNER_TEMP/brain.gguf"
-          test "$(stat -c%s "$RUNNER_TEMP/brain.gguf")" -gt 700000000
-          echo "Model bytes verified (size check only; not a cryptographic signature)."
+          echo "724fb256bec1ff062b2f65e4569e871ad2e95ab2a3989723d1769c54294730b7  $RUNNER_TEMP/brain.gguf" | sha256sum -c -
       - name: Run CPU model and verify its independent patch
         shell: bash
         run: |

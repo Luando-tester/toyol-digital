@@ -40,11 +40,12 @@ test('displays market gap without claiming advertised payouts',()=>{
 test('quest board distinguishes extra skills and provisional source inspection from earnings',()=>{
  const s=formatStatus({checked:2,found:false,failures:[]},{
    audit:{total_feed_items:659,passed_initial_safety_filters:273,matching_automated_skills:1},
-   intel:{sources_checked:4,conditional_candidates:1,rejected:2,unverified:1},
+   intel:{sources_checked:4,conditional_candidates:1,competitive_candidates:1,needs_verification:0,rejected:2,unverified:1},
    event:'workflow_dispatch'
  });
  assert.match(s,/Kemahiran pembetulan khusus dipasang: \*\*11\*\*/);
- assert.match(s,/Calon bersyarat: \*\*1\*\*/);
- assert.match(s,/Ditolak: \*\*2\*\*/);
+ assert.match(s,/Calon boleh dicuba secara terhad: \*\*1\*\*/);
+ assert.match(s,/Calon dengan persaingan \(bukan automatik gugur\): \*\*1\*\*/);
+ assert.match(s,/Disekat oleh syarat keselamatan\/kelayakan: \*\*2\*\*/);
  assert.match(s,/Pendapatan disahkan: \*\*RM0\*\*/);
 });

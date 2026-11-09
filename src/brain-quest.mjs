@@ -11,7 +11,7 @@ import {createHash} from 'node:crypto';
 import {collectContext,makeMessages,queryLocalModel,applyProposal} from './brain-core.mjs';
 import {rankEvidence,chooseEvidence} from './context-rank.mjs';
 import {collectPatch} from './worker.mjs';
-import {evaluate} from './quest-intel.mjs';
+import {decideQuest,qualityEvidence} from './competency.mjs';
 
 const REPO='ilhamraduanbis-source/toyol-digital';
 const ISSUE_RE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)$/;
@@ -45,13 +45,14 @@ async function attempt(url){
  const apiRoot='/repos/'+m[1]+'/'+m[2];
  const [repo,issue]=await Promise.all([api(apiRoot),api(apiRoot+'/issues/'+m[3])]);
  if(repo.private||repo.archived||repo.disabled||repo.size>25000)throw Error('repository excluded');
- if(issue.comments>15)throw Error('issue heavily contested');
- const comments=issue.comments?await api(apiRoot+'/issues/'+m[3]+'/comments?per_page=50'):[];
- const verdict=evaluate(issue,comments,repo);
- if(!verdict.pass)throw Error('issue rejected: '+verdict.reasons.slice(0,3).join(', '));
- const pulls=await api(apiRoot+'/pulls?state=open&per_page=100');
- if(!Array.isArray(pulls))throw Error('cannot verify competing PRs');
- if(pulls.some(p=>new RegExp('#'+m[3]+'\\b|/issues/'+m[3]+'\\b','i').test((p.body||'')+' '+(p.title||''))))throw Error('competing pull request');
+ const [comments,pulls]=await Promise.all([
+  issue.comments?api(apiRoot+'/issues/'+m[3]+'/comments?per_page=100'):Promise.resolve([]),
+  api(apiRoot+'/pulls?state=open&per_page=100')
+ ]);
+ if(!Array.isArray(comments)||!Array.isArray(pulls))throw Error('cannot assess competitor evidence');
+ const verdict=decideQuest(issue,comments,repo,pulls);
+ if(!verdict.can_prepare_draft)throw Error('quest '+verdict.decision+': '+[...verdict.hard_blocks,...verdict.review_flags].slice(0,3).join(', '));
+
  const work=mkdtempSync(join(tmpdir(),'toyol-ai-quest-'));
  try{
   const root=join(work,'source');
@@ -77,8 +78,17 @@ async function attempt(url){
   return {
    status:'AI_DRAFT_CREATED_NOT_SUBMITTED',issue:url,
    repo:m[1]+'/'+m[2],edited_files:result.files,
+   competition:verdict.competition,
+   competition_strategy:verdict.decision,
+   competency_evidence:qualityEvidence({
+    patch:true,
+    syntax:result.validation.every(x=>x.result==='pass'),
+    requirements:/acceptance|expected behavior|expected result|requirements/i.test(String(issue.body||'')),
+    tests:false,
+    rivalCompared:false
+   }),
    checks:result.validation,sha256:createHash('sha256').update(patch).digest('hex'),
-   not_verified:['full project tests','maintainer acceptance','platform payout','automation permitted by bounty terms'],
+   not_verified:['independent real project behavioral tests','maintainer acceptance','platform payout','automation permitted by bounty terms','rival PR quality'],
    earned_amount_verified:0
   };
  }finally{rmSync(work,{recursive:true,force:true});}

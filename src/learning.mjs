@@ -81,7 +81,7 @@ export function rankWithMemory(prioritized,ledger,limit=5){
  return prioritized.map(x=>({...x,learning:learningAdvice(x.issue_url,ledger)}))
   .sort((a,b)=>(b.review_priority_points+b.learning.priority_adjustment)-
    (a.review_priority_points+a.learning.priority_adjustment)||a.issue_url.localeCompare(b.issue_url))
-  .slice(0,Math.max(1,Math.min(5,Math.floor(limit)||1)));
+  .slice(0,Math.max(1,Math.min(25,Math.floor(limit)||1)));
 }
 async function githubIssue(token,method='GET',body=null){
  const controller=new AbortController(),stop=setTimeout(()=>controller.abort(),12000);

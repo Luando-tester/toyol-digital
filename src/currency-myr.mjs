@@ -21,7 +21,7 @@ export function normalizeCurrency(code){
  return CODES.has(c)?c:null;
 }
 export function currencyDecision({amount,currency,payoutRoute=null,platformSupportsRoute=false,
- verifiedRecipient=false,settled=false,fxQuote=null,fees=null,paidMyr=null}={}){
+ verifiedRecipient=false,settled=false,bankReceiptVerified=false,fxQuote=null,fees=null,paidMyr=null}={}){
  const code=normalizeCurrency(currency);
  if(!code||!finite(amount))throw Error('invalid amount or currency');
  const route=payoutRoute?ROUTES[payoutRoute]:null;
@@ -37,7 +37,7 @@ export function currencyDecision({amount,currency,payoutRoute=null,platformSuppo
  const converted=rate!==null?rounded(amount*rate):null;
  const netIllustrative=converted!==null&&feeKnown?rounded(converted-fees.total_myr):null;
  const canWithdraw=transferSupported&&recipientReady&&!isCrypto;
- const actuallyReceived=finite(paidMyr)&&settled===true&&paidMyr>0?rounded(paidMyr):0;
+ const actuallyReceived=finite(paidMyr)&&settled===true&&bankReceiptVerified===true&&paidMyr>0?rounded(paidMyr):0;
  let status='UNVERIFIED_PAYOUT_PATH';
  if(isCrypto)status='CRYPTO_NOT_MYR';
  else if(canWithdraw)status=rate!==null&&feeKnown?'MYR_ROUTE_AND_QUOTE_PRESENT':'MYR_ROUTE_PRESENT_COST_UNKNOWN';
@@ -58,7 +58,7 @@ export function currencyDecision({amount,currency,payoutRoute=null,platformSuppo
   illustrative_net_myr:netIllustrative!==null&&netIllustrative>=0?netIllustrative:null,
   illustrative_only:true,
   actual_received_myr:actuallyReceived,
-  earnings_status:actuallyReceived>0?'RECEIPT_ATTESTED_BY_CALLER_NOT_INDEPENDENTLY_AUDITED':'NO_VERIFIED_RECEIPT',
+  earnings_status:actuallyReceived>0?'RECEIPT_VERIFICATION_DECLARED_REQUIRES_BANK_EVIDENCE':'NO_VERIFIED_RECEIPT',
   note:'MYR bank transfer capability is not proof a specific requester will pay. Unknown fees or FX remain null.'
  };
 }

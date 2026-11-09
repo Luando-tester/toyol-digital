@@ -65,3 +65,17 @@ test('test-pass and requirement checks support evidence-backed candidate, not ac
  assert.equal(r.score,6);
  assert.match(r.caveat,/not skill mastery/);
 });
+
+test('unverified competitor comment cannot impose a hard ban on automated work',()=>{
+ const r=decideQuest(issue({comments:1}),[
+  {user:{login:'rival'},body:'Bots not allowed, pay a deposit to get this task.'}
+ ],{},[],NOW);
+ assert.equal(r.decision,'VERIFY_FIRST');
+ assert.equal(r.hard_blocks.length,0);
+ assert.ok(r.review_flags.some(x=>x.includes('unverified comment')));
+});
+test('84 comments with valid original acceptance criteria is competitive, not rejection',()=>{
+ const r=decideQuest(issue({comments:84}),Array.from({length:84},(_,i)=>({user:{login:'user'+i},body:'Discussing parser acceptance tests.'})),{},[],NOW);
+ assert.equal(r.decision,'COMPETE_WITH_BETTER_EVIDENCE');
+ assert.equal(r.can_prepare_draft,true);
+});

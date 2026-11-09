@@ -43,11 +43,15 @@ export function decideQuest(issue,comments=[],repo={},pulls=[],now=Date.now()){
  const profile=competitionProfile(issue,comments,pulls);
  const blockers=[],review=[];
  const body=String(issue.body||'');
- const source=body+'\n'+(Array.isArray(comments)?comments:[]).slice(0,50).map(c=>String(c.body||'')).join('\n');
+ const userComments=(Array.isArray(comments)?comments:[]).slice(0,100).map(c=>String(c.body||''));
+ // Only issue-body terms are authoritative at this stage. Unverified
+ // commenters cannot force hard rejection with a misleading message.
  if(issue.state!=='open'||issue.locked)blockers.push('issue closed or locked');
  if(repo.private||repo.archived||repo.disabled)blockers.push('repository not usable');
- if(humanOnly.test(source))blockers.push('human contribution required or AI disallowed');
- if(payToWork.test(source))blockers.push('upfront payment or deposit required');
+ if(humanOnly.test(body))blockers.push('human contribution required or AI disallowed');
+ if(payToWork.test(body))blockers.push('upfront payment or deposit required');
+ if(userComments.some(x=>humanOnly.test(x)||payToWork.test(x)))
+  review.push('an unverified comment alleges eligibility restrictions or payment; confirm official terms');
  if(suspicious.test(body))blockers.push('instructions/credentials disclosure requested');
  if(!hasBounty(issue))review.push('reward not independently visible in original issue');
  if(body.trim().length<40)review.push('acceptance criteria too vague');

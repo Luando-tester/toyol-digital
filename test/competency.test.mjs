@@ -79,3 +79,13 @@ test('84 comments with valid original acceptance criteria is competitive, not re
  assert.equal(r.decision,'COMPETE_WITH_BETTER_EVIDENCE');
  assert.equal(r.can_prepare_draft,true);
 });
+
+test('precise small issue title permits read-only analysis and local draft despite terse body',()=>{
+ const r=decideQuest(issue({
+  title:'Remove disableAutoFocus in favor of focusOnHover={false}',
+  body:'/bounty $3',comments:84
+ }),[{body:'/attempt',user:{login:'rival'}}],{},[],NOW);
+ assert.equal(r.decision,'COMPETE_WITH_BETTER_EVIDENCE');
+ assert.equal(r.can_prepare_draft,true);
+ assert.ok(r.investigation_warnings.some(s=>s.includes('comment evidence incomplete')));
+});

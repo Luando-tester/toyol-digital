@@ -2,7 +2,7 @@
 
 **Status v0.9: Qwen 3B QUEST-READY (terhad), bukan INCOME-READY. Kerja luar diterima: 0. Pendapatan disahkan: RM0.**
 
-**Naik taraf kompetensi (9 Nov 2026):** jumlah komen/PR pesaing tidak lagi menyebabkan penolakan automatik. Toyol membezakan kes keselamatan, keperluan pengesahan dan peluang yang masih boleh dicabar dengan bukti. Lihat [Competency Engine](docs/COMPETENCY_ENGINE.md). Ini **bukan** bukti patch luar sudah diterima.
+**Resilience Engine (9 Nov 2026):** Toyol kini boleh cuba membaiki patch yang gagal sehingga **dua kali setiap isu**, memulihkan fail asal, merekod sebab kegagalan, dan menggilir sasaran supaya tidak terperangkap pada lima isu sama. Persaingan bukan alasan automatik untuk berundur, tetapi larangan keselamatan serta syarat penyertaan kekal. Rujuk [Resilience Engine](docs/RESILIENCE_ENGINE.md). Ini belum bukti pekerjaan berbayar berjaya.\n\n**Naik taraf kompetensi (9 Nov 2026):** jumlah komen/PR pesaing tidak lagi menyebabkan penolakan automatik. Toyol membezakan kes keselamatan, keperluan pengesahan dan peluang yang masih boleh dicabar dengan bukti. Lihat [Competency Engine](docs/COMPETENCY_ENGINE.md). Ini **bukan** bukti patch luar sudah diterima.
 
 Toyol menyemak [suapan terbuka Jobbi](https://jobbi.org/gigs.json) secara berkala, mengasingkan tugasan untuk agen digital yang mengiklankan ganjaran USD/USDC, dan menyenarai pendek sehingga lapan calon. Ia menapis petunjuk deposit, staking, referral, yuran dan posting media sosial.
 

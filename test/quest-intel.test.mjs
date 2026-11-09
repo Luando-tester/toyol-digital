@@ -14,12 +14,16 @@ const gig=(title='Fix some parser output')=>({
 });
 const NOW=Date.parse('2026-11-08T12:00:00Z');
 test('original issue can pass only provisional public checks',()=>{
- assert.deepEqual(evaluate(issue(),[],{archived:false,private:false},NOW),{pass:true,reasons:[]});
+ const result=evaluate(issue(),[],{archived:false,private:false},NOW);
+ assert.equal(result.pass,true);
+ assert.equal(result.decision,'TRY_CONSTRAINED_FIX');
+ assert.deepEqual(result.reasons,[]);
 });
-test('existing competitor PR or claim is an automatic refusal',()=>{
+test('competitor claims trigger competing with evidence, not automatic refusal',()=>{
  const r=evaluate(issue({comments:1}),[{body:'/claim https://github.com/example/sample/pull/50'}],{},NOW);
- assert.equal(r.pass,false);
- assert.ok(r.reasons.some(x=>x.includes('existing claim')));
+ assert.equal(r.pass,true);
+ assert.equal(r.decision,'COMPETE_WITH_BETTER_EVIDENCE');
+ assert.equal(r.competition.explicit_claims,1);
 });
 test('meaningful human contribution and deposit needs are disqualifying',()=>{
  const r=evaluate(issue({body:'Acceptance: meaningful human contribution required. Deposit to start.'}),[],{},NOW);
@@ -37,11 +41,13 @@ test('quest inspector uses read-only injectable GitHub requests',async()=>{
  const mock=async(path)=>{
   if(path.endsWith('/issues/23'))return issue();
   if(path.endsWith('/sample'))return {archived:false};
+  if(path.includes('/pulls?'))return [];
   throw Error('unexpected request');
  };
  const a=await inspect([gig()],{githubGet:mock,now:NOW});
  assert.equal(a.sources_checked,1);
  assert.equal(a.conditional_candidates,1);
+ assert.equal(a.competitive_candidates,0);
  assert.equal(a.earned_amount_verified,0);
  assert.match(render(a),/Income verified: \*\*RM0\*\*/);
 });

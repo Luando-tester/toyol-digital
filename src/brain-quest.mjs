@@ -13,6 +13,9 @@ import {rankEvidence,chooseEvidence} from './context-rank.mjs';
 import {collectPatch} from './worker.mjs';
 import {decideQuest,qualityEvidence} from './competency.mjs';
 import {recoverPatch,resilienceSummary,classifySetback} from './resilience.mjs';
+import {valueAssessment} from './opportunity.mjs';
+import {understandSituation,chooseBoardOpportunities,composeRepairTask} from './situation.mjs';
+import {loadLearning,saveLearning,recordLearning,emptyLedger} from './learning.mjs';
 
 const REPO='ilhamraduanbis-source/toyol-digital';
 const ISSUE_RE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)$/;
@@ -48,7 +51,7 @@ export function chooseQuestBatch(urls,runNumber=1,limit=MAX_TRIES){
 export function rankFilePaths(paths,title,body=''){
  return rankEvidence(paths,title,body).map(x=>x.path);
 }
-async function attempt(url){
+async function attempt(url,offer=null){
  const m=ISSUE_RE.exec(url);
  if(!m)throw Error('invalid GitHub issue URL');
  const apiRoot='/repos/'+m[1]+'/'+m[2];
@@ -61,6 +64,11 @@ async function attempt(url){
  if(!Array.isArray(comments)||!Array.isArray(pulls))throw Error('cannot assess competitor evidence');
  const verdict=decideQuest(issue,comments,repo,pulls);
  if(!verdict.can_prepare_draft)throw Error('quest '+verdict.decision+': '+[...verdict.hard_blocks,...verdict.review_flags].slice(0,3).join(', '));
+ const situation=understandSituation(offer,issue,verdict);
+ const value=offer?valueAssessment(offer,{questDecision:verdict,effort:situation.effort}):null;
+ // Lack of a callable service or required human outreach is not a code fix.
+ if(situation.recommended_strategy==='ABSTAIN_OR_RESEARCH')
+  throw Error('quest VERIFY_FIRST: human or external service dependency, not a safe code patch');
 
  const work=mkdtempSync(join(tmpdir(),'toyol-ai-quest-'));
  try{
@@ -76,7 +84,7 @@ async function attempt(url){
   }
   if(!chosen.length)throw Error('no small readable source files');
   const context=collectContext(root,chosen);
-  const description=(issue.title+'\n'+String(issue.body||'').slice(0,1350)).slice(0,1600);
+  const description=composeRepairTask(issue,situation);
   const repair=await recoverPatch({
    root,context,task:description,model:queryLocalModel,maxAttempts:2,
    validate:async()=>{
@@ -94,6 +102,9 @@ async function attempt(url){
    repo:m[1]+'/'+m[2],edited_files:result.files,
    competition:verdict.competition,
    competition_strategy:verdict.decision,
+   situation:{problem_kind:situation.problem_kind,recommended_strategy:situation.recommended_strategy,acceptance_verified:false,proof_requirements:situation.proof_requirements},
+   economic_value:value,
+   claimed_earnings_myr:null,
    resilience:resilienceSummary(repair.attempts),
    attempts:repair.attempts,
    competency_evidence:qualityEvidence({
@@ -109,7 +120,7 @@ async function attempt(url){
   };
  }finally{rmSync(work,{recursive:true,force:true});}
 }
-export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAttempt=attempt}={}){
+export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAttempt=attempt,loadMemory=loadLearning,saveMemory=saveLearning}={}){
  mkdirSync('out/brain',{recursive:true});
  const manifest={
   status:'NO_ELIGIBLE_REAL_QUEST',sampled_quest_count:0,
@@ -117,12 +128,25 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
  };
  try{
   const board=await getIssue();
-  const urls=chooseQuestBatch(questUrls(board.body),process.env.GITHUB_RUN_NUMBER||'1',MAX_TRIES);
-  manifest.sampled_quest_count=urls.length;
-  manifest.selection_strategy='rotating batch of at most five distinct issues per run';
-  for(const url of urls){
+  const loaded=await loadMemory();
+  const ledger=loaded?.ledger||emptyLedger();
+  manifest.learning_source=loaded?.source||'UNAVAILABLE';
+  const runNo=process.env.GITHUB_RUN_NUMBER||'1';
+  const opportunities=chooseBoardOpportunities(board.body,ledger,runNo,MAX_TRIES);
+  const choices=opportunities.length?opportunities:
+    chooseQuestBatch(questUrls(board.body),runNo,MAX_TRIES).map(url=>({url,offer:null}));
+  manifest.sampled_quest_count=choices.length;
+  manifest.selection_strategy=opportunities.length?
+   'economic feasibility, evidence, prior setbacks, one exploratory slot':
+   'rotating fallback for legacy quest board without reward metadata';
+  manifest.opportunity_screen=opportunities.map(x=>({
+   issue:x.url,priority:x.review_priority_points,effort:x.screening_effort,
+   money_grade:x.money_grade,payout_malaysia_verified:x.Malaysia_cashout_verified,
+   learning:x.learning?.stage
+  }));
+  for(const {url,offer} of choices){
    try{
-    const result=await runAttempt(url);
+    const result=await runAttempt(url,offer);
     Object.assign(manifest,result);
     break;
    }catch(err){
@@ -135,6 +159,16 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
    }
   }
  }catch(e){manifest.status='QUEST_SOURCE_UNAVAILABLE';manifest.error=String(e.message).slice(0,130);}
+ const runNo=process.env.GITHUB_RUN_NUMBER||'1';
+ // Persist only public GitHub issue URLs and sanitized outcome categories.
+ try{
+  const stored=await loadMemory();
+  const updated=recordLearning(stored?.ledger||emptyLedger(),manifest,runNo);
+  const saved=await saveMemory(updated);
+  manifest.learning_ledger={source:stored?.source||'UNKNOWN',saved:!!saved?.saved,events:updated.runs.length};
+ }catch(e){
+  manifest.learning_ledger={saved:false,reason:'learning ledger update unavailable'};
+ }
  writeFileSync('out/brain/quest-evidence.json',JSON.stringify(manifest,null,2));
  console.log('Toyol AI quest bridge:',manifest.status,'; candidates:',manifest.sampled_quest_count,'; earned RM0');
  for(const item of manifest.evaluated.slice(0,5))console.log('Quest',item.category,item.url,':',item.reason);

@@ -12,6 +12,7 @@ import {collectContext,makeMessages,queryLocalModel,applyProposal} from './brain
 import {rankEvidence,chooseEvidence} from './context-rank.mjs';
 import {collectPatch} from './worker.mjs';
 import {decideQuest,qualityEvidence} from './competency.mjs';
+import {recoverPatch,resilienceSummary,classifySetback} from './resilience.mjs';
 
 const REPO='ilhamraduanbis-source/toyol-digital';
 const ISSUE_RE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)$/;
@@ -68,11 +69,16 @@ async function attempt(url){
   if(!chosen.length)throw Error('no small readable source files');
   const context=collectContext(root,chosen);
   const description=(issue.title+'\n'+String(issue.body||'').slice(0,1350)).slice(0,1600);
-  const proposal=await queryLocalModel(makeMessages(description,context));
-  if(proposal.edits.length===0)throw Error('model declined uncertain task');
-  const result=applyProposal(root,context,proposal);
-  const patch=collectPatch(root);
-  if(patch.length>18000||!patch.startsWith('diff --git '))throw Error('invalid large diff');
+  const repair=await recoverPatch({
+   root,context,task:description,model:queryLocalModel,maxAttempts:2,
+   validate:async()=>{
+    const diff=collectPatch(root);
+    if(diff.length>18000||!diff.startsWith('diff --git '))throw Error('patch missing or oversized');
+    return {diff};
+   }
+  });
+  const result=repair.patch;
+  const patch=repair.diff;
   mkdirSync('out/brain',{recursive:true});
   writeFileSync('out/brain/quest-draft.patch',patch+'\n');
   return {
@@ -80,6 +86,8 @@ async function attempt(url){
    repo:m[1]+'/'+m[2],edited_files:result.files,
    competition:verdict.competition,
    competition_strategy:verdict.decision,
+   resilience:resilienceSummary(repair.attempts),
+   attempts:repair.attempts,
    competency_evidence:qualityEvidence({
     patch:true,
     syntax:result.validation.every(x=>x.result==='pass'),
@@ -108,18 +116,25 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
     const result=await runAttempt(url);
     Object.assign(manifest,result);
     break;
-   }catch(err){manifest.evaluated.push({url,result:'SKIPPED',reason:String(err.message).slice(0,190)});}
+   }catch(err){
+    const setback=classifySetback(err);
+    manifest.evaluated.push({
+     url,result:'NOT_SOLVED',category:err.category||setback.type,
+     reason:String(err.message).slice(0,190),
+     attempts:Array.isArray(err.attempts)?err.attempts:[]
+    });
+   }
   }
  }catch(e){manifest.status='QUEST_SOURCE_UNAVAILABLE';manifest.error=String(e.message).slice(0,130);}
  writeFileSync('out/brain/quest-evidence.json',JSON.stringify(manifest,null,2));
  console.log('Toyol AI quest bridge:',manifest.status,'; candidates:',manifest.sampled_quest_count,'; earned RM0');
- for(const item of manifest.evaluated.slice(0,5))console.log('Rejected',item.url,':',item.reason);
+ for(const item of manifest.evaluated.slice(0,5))console.log('Quest',item.category,item.url,':',item.reason);
  if(process.env.GITHUB_STEP_SUMMARY){
   const lines=['## AI Quest Draft (local model)','',
     '- Candidates checked: **'+manifest.sampled_quest_count+'**',
     '- Final result: **'+manifest.status+'**',
     '- Real submissions: **0** | Accepted jobs: **0** | Verified earnings: **RM0**','',''];
-  for(const x of manifest.evaluated.slice(0,5))lines.push('- '+x.url+' — '+x.reason);
+  for(const x of manifest.evaluated.slice(0,5))lines.push('- '+x.url+' — '+(x.category||'UNVERIFIED')+' — '+x.reason+' — '+(x.attempts?.length||0)+' local attempts');
   lines.push('','Local-model drafts are not proof of payment or permission to send work.');
   appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join('\n')+'\n','utf8');
  }

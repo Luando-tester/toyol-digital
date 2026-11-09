@@ -17,6 +17,7 @@ import {valueAssessment} from './opportunity.mjs';
 import {understandSituation,chooseBoardOpportunities,composeRepairTask} from './situation.mjs';
 import {loadLearning,saveLearning,recordLearning,emptyLedger} from './learning.mjs';
 import {investigateRivals,contrastPatch} from './rival.mjs';
+import {findSourceBySymbols} from './symbol-search.mjs';
 
 const REPO='ilhamraduanbis-source/toyol-digital';
 const ISSUE_RE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)$/;
@@ -78,9 +79,11 @@ async function attempt(url,offer=null){
   git(['clone','--quiet','--depth','1','--','https://github.com/'+m[1]+'/'+m[2]+'.git',root],work);
   const names=git(['ls-files'],root).split('\n').filter(Boolean);
   const choice=chooseEvidence(names,issue.title,issue.body||'');
-  if(!choice.paths.length)throw Error('no issue-relevant editable source; abstaining');
+  const symbolMatches=findSourceBySymbols(root,issue.title,issue.body||'');
+  const relevant=[...new Set([...symbolMatches.paths,...choice.paths])].filter(path=>names.includes(path)).slice(0,5);
+  if(!relevant.length)throw Error('no issue-relevant source or matching code symbol; investigate differently');
   const chosen=[];
-  for(const path of choice.paths){
+  for(const path of relevant){
    if(chosen.length>=5)break;
    try{if(statSync(join(root,path)).size<=6000)chosen.push(path);}catch{}
   }
@@ -105,6 +108,7 @@ async function attempt(url,offer=null){
    competition:verdict.competition,
    competition_strategy:verdict.decision,
    situation:{problem_kind:situation.problem_kind,recommended_strategy:situation.recommended_strategy,acceptance_verified:false,proof_requirements:situation.proof_requirements},
+   source_retrieval:{symbol_status:symbolMatches.status,matching_symbols:symbolMatches.matching_symbols||[],selected_paths:chosen},
    economic_value:value,
    rival_evidence:rivalEvidence,
    rival_scope_contrast:contrastPatch(result.files,rivalEvidence.rivals.filter(x=>Array.isArray(x.visible_paths))),

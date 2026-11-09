@@ -18,6 +18,7 @@ import {understandSituation,chooseBoardOpportunities,composeRepairTask} from './
 import {loadLearning,saveLearning,recordLearning,emptyLedger} from './learning.mjs';
 import {investigateRivals,contrastPatch} from './rival.mjs';
 import {findSourceBySymbols} from './symbol-search.mjs';
+import {enforcePatchRequirements} from './semantic-check.mjs';
 
 const REPO='ilhamraduanbis-source/toyol-digital';
 const ISSUE_RE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)$/;
@@ -95,7 +96,8 @@ async function attempt(url,offer=null){
    validate:async()=>{
     const diff=collectPatch(root);
     if(diff.length>18000||!diff.startsWith('diff --git '))throw Error('patch missing or oversized');
-    return {diff};
+    const semantic=enforcePatchRequirements(issue.title,diff);
+    return {diff,semantic};
    }
   });
   const result=repair.patch;
@@ -109,6 +111,7 @@ async function attempt(url,offer=null){
    competition_strategy:verdict.decision,
    situation:{problem_kind:situation.problem_kind,recommended_strategy:situation.recommended_strategy,acceptance_verified:false,proof_requirements:situation.proof_requirements},
    source_retrieval:{symbol_status:symbolMatches.status,matching_symbols:symbolMatches.matching_symbols||[],selected_paths:chosen},
+   explicit_requirement_check:repair.semantic,
    economic_value:value,
    rival_evidence:rivalEvidence,
    rival_scope_contrast:contrastPatch(result.files,rivalEvidence.rivals.filter(x=>Array.isArray(x.visible_paths))),
@@ -118,7 +121,7 @@ async function attempt(url,offer=null){
    competency_evidence:qualityEvidence({
     patch:true,
     syntax:result.validation.every(x=>x.result==='pass'),
-    requirements:/acceptance|expected behavior|expected result|requirements/i.test(String(issue.body||'')),
+    requirements:repair.semantic?.applicable===true&&repair.semantic?.passed===true,
     tests:false,
     rivalCompared:false
    }),

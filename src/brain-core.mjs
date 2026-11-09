@@ -7,7 +7,7 @@ import {readFileSync, writeFileSync, lstatSync, realpathSync} from 'node:fs';
 import {resolve, sep} from 'node:path';
 import {staticValidate} from './static-check.mjs';
 
-const READABLE_FILE=/^(?:README\.md|(?:src|lib|app|docs|test|tests|data|fixtures|datasets)\/[A-Za-z0-9_./-]+\.(?:js|mjs|cjs|ts|tsx|jsx|py|json|md|csv))$/i;
+const READABLE_FILE=/^(?:README\.md|(?:src|lib|app|docs|test|tests|data|fixtures|datasets|packages)\/[A-Za-z0-9_./-]+\.(?:js|mjs|cjs|ts|tsx|jsx|py|json|md|csv))$/i;
 const EDITABLE_FILE=/^(?:README\.md|(?:src|lib|app|docs|data|fixtures|datasets)\/[A-Za-z0-9_./-]+\.(?:js|mjs|cjs|ts|tsx|jsx|py|json|md|csv))$/i;
 const FORBIDDEN_CHANGE=/\b(?:child_process|subprocess|os\.system|eval\s*\(|new\s+Function\s*\(|exec\s*\(|curl\s|wget\s|process\.env|GH_TOKEN|GITHUB_TOKEN|private[_ -]?key|seed phrase|wallet seed)\b/i;
 

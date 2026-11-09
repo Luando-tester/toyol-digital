@@ -34,7 +34,7 @@ test('meaningful human contribution and deposit needs are disqualifying',()=>{
 test('stale or unlabeled issue does not count as verified bounty',()=>{
  const r=evaluate(issue({labels:[],body:'A code improvement with full tests',updated_at:'2024-01-01T00:00:00Z'}),[],{},NOW);
  assert.equal(r.pass,false);
- assert.ok(r.reasons.some(x=>x.includes('bounty marker')));
+ assert.ok(r.reasons.some(x=>x.includes('reward not independently visible')));
  assert.ok(r.reasons.some(x=>x.includes('stale')));
 });
 test('quest inspector uses read-only injectable GitHub requests',async()=>{

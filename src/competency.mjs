@@ -11,6 +11,7 @@ const suspicious=/\b(?:reveal|paste|include|upload|print|leak|expose)\b.{0,140}\
 const claim=/^\s*\/(?:claim|attempt)\b|\b(?:i am|i'm|we are|i have|i've)\s+(?:claiming|working on|submitted|opened)\b|\b(?:claimed by|PR submitted)\b/i;
 const noClaim=/\b(?:not claiming|not claimed|won't claim|cannot claim|not working on|will not submit)\b/i;
 const refFor=n=>Number.isInteger(n)&&n>0?new RegExp('(?:\\b(?:fix(?:es|ed)?|close(?:s|d)?|resolve(?:s|d)?)\\s+#'+n+'\\b|#'+n+'\\b|/issues/'+n+'(?:\\b|$))','i'):null;
+const preciseChange=/^(?:remove\s+.+\s+in\s+favor\s+of\s+.+|rename\s+[A-Za-z_$].+\s+to\s+[A-Za-z_$].+|fix\s+typo\s+.+\s+in\s+.+)$/i;
 const hasBounty=issue=>!!issue.labels?.some(l=>/\b(bounty|reward|paid)\b/i.test(String(l.name||l)))||
  /\/bounty\s+\$?\d+|\bbounty of\b/i.test(String(issue.body||''));
 
@@ -54,12 +55,13 @@ export function decideQuest(issue,comments=[],repo={},pulls=[],now=Date.now()){
   review.push('an unverified comment alleges eligibility restrictions or payment; confirm official terms');
  if(suspicious.test(body))blockers.push('instructions/credentials disclosure requested');
  if(!hasBounty(issue))review.push('reward not independently visible in original issue');
- if(body.trim().length<40)review.push('acceptance criteria too vague');
+ if(body.trim().length<40&&!preciseChange.test(String(issue.title||'')))review.push('acceptance criteria too vague');
  if(issue.assignee||issue.assignees?.length)review.push('issue assigned; participation may be restricted');
  const updated=Date.parse(issue.updated_at||issue.created_at||'');
  if(Number.isFinite(updated)&&now-updated>180*24*60*60*1000)review.push('issue stale');
  if(profile.linked_merged_prs)review.push('related pull request already merged; possible completion');
- if((issue.comments||0)>50 && comments.length<Math.min(issue.comments,100))review.push('comment evidence incomplete');
+ const warnings=[];
+ if((issue.comments||0)>50 && comments.length<Math.min(issue.comments,100))warnings.push('comment evidence incomplete: research only, no submission');
  const decision=blockers.length?'REJECT':
    review.length?'VERIFY_FIRST':
    profile.competitive?'COMPETE_WITH_BETTER_EVIDENCE':'TRY_CONSTRAINED_FIX';
@@ -68,6 +70,7 @@ export function decideQuest(issue,comments=[],repo={},pulls=[],now=Date.now()){
   can_prepare_draft:['COMPETE_WITH_BETTER_EVIDENCE','TRY_CONSTRAINED_FIX'].includes(decision),
   hard_blocks:blockers,
   review_flags:review,
+  investigation_warnings:warnings,
   competition:profile,
   next_evidence:[
    'identify relevant source and reproduce the reported failure',

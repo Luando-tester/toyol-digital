@@ -1,3 +1,4 @@
+import {currencyDecision,valuePriority,normalizeCurrency} from './currency-myr.mjs';
 /**
  * Opportunity Intelligence. Never equate advertised rewards with accepted
  * work, settled funds, or cashable Malaysian earnings.
@@ -18,14 +19,14 @@ export function parseQuestBoard(body){
  for(const section of sections){
   const title=(section.split('\n')[0]||'').trim().replace(/\\([*_[\]])/g,'$1');
   const url=(section.match(/^- Sumber asal: (https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/[1-9]\d*)\s*$/m)||[])[1];
-  const reward=section.match(/^- Ganjaran diiklankan: ([0-9]+(?:\.[0-9]{1,4})?) (USD|USDC)\s*$/m);
+  const reward=section.match(/^- Ganjaran diiklankan: ([0-9]+(?:\.[0-9]{1,4})?) (MYR|RM|USD|USDC|SGD|EUR|GBP|AUD|JPY|IDR|THB)\s*$/m);
   if(!ISSUE.test(url||'')||!reward)continue;
   const amount=Number(reward[1]);
   if(!(amount>0)||amount>100000)continue;
   const meta=section.match(/^- Board: ([a-z0-9_-]+) \| gred indeks: ([A-Z]) \| status dana: ([a-z0-9_-]+)/mi);
   const accept=section.match(/^- Penerimaan: ([^\n]+)/m);
   const summary=section.match(/^- Ringkasan: ([^\n]+)/m);
-  found.push({url,title:title.slice(0,160),advertised_amount:amount,currency:reward[2],
+  found.push({url,title:title.slice(0,160),advertised_amount:amount,currency:reward[2]==='RM'?'MYR':reward[2],
    board:meta?.[1]?.toLowerCase()||'unknown',index_grade:meta?.[2]||null,
    source_funding_claim:meta?.[3]||'unknown',
    acceptance_type:accept?.[1]?.trim().slice(0,80)||'unknown',
@@ -51,15 +52,27 @@ export function assessEffort(offer,issue={}){
 export function valueAssessment(offer,{questDecision=null,effort=null,payoutEvidence=null,actualPayment=null}={}){
  const amount=Number(offer?.advertised_amount);
  const currency=String(offer?.currency||'');
- if(!ISSUE.test(offer?.url||'')||!['USD','USDC'].includes(currency)||!Number.isFinite(amount)||amount<=0)
+ if(!ISSUE.test(offer?.url||'')||!normalizeCurrency(currency)||!Number.isFinite(amount)||amount<=0)
   throw Error('invalid advertised offer');
  const status=questDecision?.decision||'VERIFY_FIRST';
  const effortView=effort||assessEffort(offer);
  const indexClaimsEscrow=trustedBoard.has(offer.board)&&offer.source_funding_claim==='escrowed';
  const verifiedEscrow=!!payoutEvidence?.escrow_verification_url&&payoutEvidence?.independent_primary_source===true;
  const malaysiaConfirmed=payoutEvidence?.malaysia_supported===true&&payoutEvidence?.cashout_confirmed===true;
- const paid=actualPayment?.accepted===true&&actualPayment?.settled===true&&Number.isFinite(actualPayment.amount)?
-  Math.max(0,Number(actualPayment.amount)):0;
+ const money=currencyDecision({
+  amount,currency,
+  payoutRoute:payoutEvidence?.payout_route||null,
+  platformSupportsRoute:payoutEvidence?.platform_verified_specific_route===true,
+  verifiedRecipient:payoutEvidence?.recipient_verified===true,
+  settled:actualPayment?.settled===true,
+  bankReceiptVerified:actualPayment?.bank_receipt_verified===true,
+  paidMyr:actualPayment?.paid_myr??null,
+  fxQuote:payoutEvidence?.fx_quote||null,
+  fees:payoutEvidence?.fees||null
+ });
+ const paid=money.actual_received_myr;
+ const cashPriority=valuePriority(money,{workEvidence:false,accepted:actualPayment?.accepted===true,
+  platformProof:payoutEvidence?.platform_verified_specific_route===true});
  const blocks=Array.isArray(questDecision?.hard_blocks)?questDecision.hard_blocks:[];
  const reviews=Array.isArray(questDecision?.review_flags)?questDecision.review_flags:[];
  const competition=questDecision?.competition||{};
@@ -71,6 +84,8 @@ export function valueAssessment(offer,{questDecision=null,effort=null,payoutEvid
  priority+=status==='TRY_CONSTRAINED_FIX'?12:status==='COMPETE_WITH_BETTER_EVIDENCE'?9:
   status==='VERIFY_FIRST'?-16:-80;
  priority+=verifiedEscrow?10:0;
+ priority+=Math.round(cashPriority.priority_score/5);
+ if(currency==='MYR')priority+=9;
  priority+=malaysiaConfirmed?9:0;
  priority-=rival==='ACTIVE_PR'?6:rival==='CLAIMED'?2:0;
  const eligibleToInvestigate=blocks.length===0;
@@ -80,12 +95,14 @@ export function valueAssessment(offer,{questDecision=null,effort=null,payoutEvid
   advertised:{amount,currency,source:offer.board,
    funding_from_index:indexClaimsEscrow?'INDEX_CLAIM_ONLY':'NOT_SHOWN'},
   reward_verified_from_primary:verifiedEscrow,
-  payout_malaysia_verified:malaysiaConfirmed,
+  payout_malaysia_verified:money.Malaysian_cashout_route_verified,
+  Malaysia_first_currency_evaluation:money,
+  payout_route_priority:cashPriority,
   accepted_work_verified:actualPayment?.accepted===true,
   settled_amount:paid,
-  take_home_myr_confirmed:null,
+  take_home_myr_confirmed:paid>0?paid:null,
   prospective_take_home_myr:null,
-  money_grade:paid>0?'SETTLED_CLAIM_NEEDS_PROOF':
+  money_grade:paid>0?'MYR_RECEIPT_RECORDED_REQUIRES_AUDIT':
    verifiedEscrow&&malaysiaConfirmed?'CASHOUT_ROUTE_VERIFIED_NO_EARNINGS':
    verifiedEscrow?'ESCROW_ONLY_NO_MY_CASHOUT_PROOF':'ADVERTISED_ONLY',
   effort:effortView,competitive_position:rival,decision:status,
@@ -95,7 +112,7 @@ export function valueAssessment(offer,{questDecision=null,effort=null,payoutEvid
   priority_definition:'Screening rubric only, NOT a win probability, expected income, hours estimate, or verified cash.',
   unresolved:[...reviews,
    ...(!verifiedEscrow?['funding not independently verified from primary source']:[]),
-   ...(!malaysiaConfirmed?['Malaysia payout and cash-out not confirmed']:[]),
+   ...(!money.Malaysian_cashout_route_verified?['specific offer payout into Malaysia not verified']:[]),
    ...(!paid?['maintainer acceptance and settlement not confirmed']:[])],
   actionable_value:effortView.complexity==='BOUNDED_CANDIDATE'?'potential for bounded patch/portfolio evidence':'unverified feasibility',
   note:'Advertised money is not earned; no spending, PR submission or claim is authorized.'

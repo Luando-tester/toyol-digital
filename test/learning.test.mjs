@@ -56,3 +56,13 @@ test('invalidated external draft is not misclassified as progress',()=>{
  assert.equal(a.stage,'CHANGE_DIAGNOSIS');
  assert.equal(a.invalidated_drafts,1);
 });
+
+test('invalid first draft plus second failed run changes diagnosis rather than endless retries',()=>{
+ const body='<!-- toyol-learning-v1 -->\n{"version":1,"runs":[{"run":8,"url":"https://github.com/tscircuit/pcb-viewer/issues/163","outcome":"INVALID_DRAFT","category":"REPAIRABLE_MODEL_OUTPUT","attempt_count":2},{"run":9,"url":"https://github.com/tscircuit/pcb-viewer/issues/163","outcome":"NOT_SOLVED","category":"REPAIRABLE_MODEL_OUTPUT","attempt_count":2}]}\n<!-- /toyol-learning-v1 -->';
+ const l=parseLedger(body);
+ const a=learningAdvice('https://github.com/tscircuit/pcb-viewer/issues/163',l);
+ assert.equal(a.stage,'CHANGE_DIAGNOSIS');
+ assert.equal(a.observed_model_failures,1);
+ assert.equal(a.invalidated_drafts,1);
+ assert.ok(a.priority_adjustment<0);
+});

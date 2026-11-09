@@ -149,6 +149,7 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
    'rotating fallback for legacy quest board without reward metadata';
   manifest.opportunity_screen=opportunities.map(x=>({
    issue:x.url,priority:x.review_priority_points,effort:x.screening_effort,
+   advertised_reward:x.offer?.advertised_amount,advertised_currency:x.offer?.currency,
    money_grade:x.money_grade,payout_malaysia_verified:x.Malaysia_cashout_verified,
    learning:x.learning?.stage
   }));
@@ -185,7 +186,15 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
     '- Candidates checked: **'+manifest.sampled_quest_count+'**',
     '- Final result: **'+manifest.status+'**',
     '- Real submissions: **0** | Accepted jobs: **0** | Verified earnings: **RM0**','',''];
+  lines.push('### Opportunity screening (advertised money is not earned)','');
+  for(const x of (manifest.opportunity_screen||[]).slice(0,5)){
+   lines.push('- '+x.issue+' — advertised '+x.advertised_reward+' '+x.advertised_currency+
+    ' — screening '+x.priority+'/100 ('+x.effort+') — '+x.money_grade+
+    ' — prior result '+(x.learning||'NONE'));
+  }
+  lines.push('','### Real-issue attempts','');
   for(const x of manifest.evaluated.slice(0,5))lines.push('- '+x.url+' — '+(x.category||'UNVERIFIED')+' — '+x.reason+' — '+(x.attempts?.length||0)+' local attempts');
+  lines.push('','Cashout MYR is not confirmed. Scores are triage heuristics, not probabilities or income forecasts.');
   lines.push('','Local-model drafts are not proof of payment or permission to send work.');
   appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join('\n')+'\n','utf8');
  }

@@ -13,7 +13,7 @@ const MAX_FEEDBACK=260;
 const clean=x=>String(x??'').replace(/[\x00-\x1f\x7f]/g,' ').replace(/\s+/g,' ').slice(0,MAX_FEEDBACK);
 const hard=/^(?:quest REJECT:|issue closed|issue locked|repository excluded|invalid GitHub issue URL|unsafe (?:path|source|edit|file)|file not in approved context|forbidden|human[- ]only|deposit required)/i;
 const verify=/^(?:quest VERIFY_FIRST:|reward not independently visible|platform terms|eligibility unverified)/i;
-const retryable=/search is absent or nonunique|non-JSON model answer|invalid edits schema|invalid edit keys|invalid model output|JavaScript syntax check failed|Python AST check failed|JSON parse failed|syntax check failed|suspicious or empty edit|no bounded edits|model declined uncertain task|patch missing or oversized/i;
+const retryable=/issue requirement mismatch|search is absent or nonunique|non-JSON model answer|invalid edits schema|invalid edit keys|invalid model output|JavaScript syntax check failed|Python AST check failed|JSON parse failed|syntax check failed|suspicious or empty edit|no bounded edits|model declined uncertain task|patch missing or oversized/i;
 
 export function classifySetback(reason){
  const message=clean(reason?.message??reason);

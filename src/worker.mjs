@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { parseInstruction, applyInstruction } from './skills.mjs';
 import { parseExtra, applyExtra } from './skills-plus.mjs';
 import { staticValidate } from './static-check.mjs';
+import { decideQuest, qualityEvidence } from './competency.mjs';
 
 const ISSUE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)(?:[/?#].*)?$/;
 const TOKEN='[A-Za-z_$][A-Za-z0-9_$]{2,59}';
@@ -78,7 +79,7 @@ export async function execute(task){
  const api='https://api.github.com/repos/'+task.owner+'/'+task.repo;
  const [repo,issue]=await Promise.all([source(api),source(api+'/issues/'+task.num)]);
  if(repo.private||repo.archived||repo.size>25000)throw Error('repo excluded');
- if(issue.state!=='open'||issue.comments>30||issue.locked||issue.assignee||issue.assignees?.length)throw Error('contested / closed issue');
+ if(issue.state!=='open'||issue.locked)throw Error('issue closed or locked');
  if(issue.title.trim().toLowerCase()!==task.title.trim().toLowerCase())throw Error('source title mismatch');
  if(!issue.labels?.some(l=>/bounty|reward|paid/i.test(l.name)))throw Error('no reward label');
  if(COST.test(issue.body||''))throw Error('issue requires costs');
@@ -88,9 +89,8 @@ export async function execute(task){
    source(api+'/pulls?state=open&per_page=100')
  ]);
  if(!Array.isArray(comments)||!Array.isArray(pulls))throw Error('competition cannot be verified');
- if(comments.some(c=>/\/(?:claim|attempt)\b|\b(?:working on|already submitted|claimed by|claiming this)\b|\/pull\/\d+/i.test(String(c.body||''))))throw Error('another contributor has claimed or attempted issue');
- const issueRef=new RegExp('(?:#'+task.num+'\\b|/issues/'+task.num+'\\b)','i');
- if(pulls.some(p=>issueRef.test(String(p.title||'')+' '+String(p.body||''))))throw Error('competing pull request exists');
+ const verdict=decideQuest(issue,comments,repo,pulls);
+ if(!verdict.can_prepare_draft)throw Error('quest '+verdict.decision+': '+[...verdict.hard_blocks,...verdict.review_flags].join(', '));
 
  const tmp=mkdtempSync(join(tmpdir(),'toyol-work-'));
  try{
@@ -101,7 +101,7 @@ export async function execute(task){
   const diff=collectPatch(root);
   mkdirSync('out/stage2',{recursive:true});
   writeFileSync('out/stage2/solution.patch',diff+'\n');
-  const manifest={status:'PATCH_PREPARED_NOT_SUBMITTED',issue:task.url,advertised_reward:task.amount+' '+task.currency,files:solved.files,replacements:solved.count,skill:solved.skill,patch_sha256:createHash('sha256').update(diff).digest('hex'),checks:['issue open and bounty-labelled','no assigned party or high comment count','git diff --check',...staticChecks],not_verified:['project test suite','maintainer acceptance','payout'],created_at:new Date().toISOString()};
+  const manifest={status:'PATCH_PREPARED_NOT_SUBMITTED',issue:task.url,advertised_reward:task.amount+' '+task.currency,files:solved.files,replacements:solved.count,skill:solved.skill,competition:verdict.competition,competition_strategy:verdict.decision,competency_evidence:qualityEvidence({patch:true,syntax:staticChecks.every(c=>c.result==='pass'),tests:false,requirements:/acceptance|expected|requirements/i.test(String(issue.body||''))}),patch_sha256:createHash('sha256').update(diff).digest('hex'),checks:['issue open and labelled','competition assessed, not automatically disqualified','git diff --check',...staticChecks],not_verified:['project behavioral test suite','maintainer acceptance','payout','real competitor patch quality'],created_at:new Date().toISOString()};
   writeFileSync('out/stage2/manifest.json',JSON.stringify(manifest,null,2));
   return manifest;
  }finally{rmSync(tmp,{recursive:true,force:true});}

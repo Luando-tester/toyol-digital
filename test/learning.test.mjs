@@ -48,3 +48,11 @@ test('invalid ledger and unsafe URLs cannot be injected into public log',()=>{
  const l=recordLearning(emptyLedger(),{evaluated:[{url:'https://evil.test/exfil',category:'HARD_STOP'}]},3);
  assert.equal(l.runs.length,0);
 });
+
+test('invalidated external draft is not misclassified as progress',()=>{
+ const body='<!-- toyol-learning-v1 -->\n{"version":1,"runs":[{"run":8,"url":"https://github.com/tscircuit/pcb-viewer/issues/163","outcome":"INVALID_DRAFT","category":"REPAIRABLE_MODEL_OUTPUT","attempt_count":2}]}\n<!-- /toyol-learning-v1 -->';
+ const l=parseLedger(body);
+ const a=learningAdvice('https://github.com/tscircuit/pcb-viewer/issues/163',l);
+ assert.equal(a.stage,'CHANGE_DIAGNOSIS');
+ assert.equal(a.invalidated_drafts,1);
+});

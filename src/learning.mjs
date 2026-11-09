@@ -63,7 +63,7 @@ export function learningAdvice(url,ledger){
  const stage=latest?.outcome==='INVALID_DRAFT'?'CHANGE_DIAGNOSIS':
   latest?.outcome==='LOCAL_DRAFT'?'REVIEW_EXISTING_DRAFT':
   blocked?'REVERIFY_ELIGIBILITY':
-  modelFailures>=2?'CHANGE_DIAGNOSIS':
+  modelFailures+invalidDrafts>=2?'CHANGE_DIAGNOSIS':
   transient?'RETRY_AFTER_INFRA_RECOVERY':
   failed.length>=2?'ROTATE_AND_GATHER_NEW_EVIDENCE':
   'EXPLORE_OR_COMPETE';

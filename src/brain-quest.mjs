@@ -16,6 +16,7 @@ import {recoverPatch,resilienceSummary,classifySetback} from './resilience.mjs';
 import {valueAssessment} from './opportunity.mjs';
 import {understandSituation,chooseBoardOpportunities,composeRepairTask} from './situation.mjs';
 import {loadLearning,saveLearning,recordLearning,emptyLedger} from './learning.mjs';
+import {investigateRivals,contrastPatch} from './rival.mjs';
 
 const REPO='ilhamraduanbis-source/toyol-digital';
 const ISSUE_RE=/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/([1-9]\d*)$/;
@@ -64,6 +65,7 @@ async function attempt(url,offer=null){
  if(!Array.isArray(comments)||!Array.isArray(pulls))throw Error('cannot assess competitor evidence');
  const verdict=decideQuest(issue,comments,repo,pulls);
  if(!verdict.can_prepare_draft)throw Error('quest '+verdict.decision+': '+[...verdict.hard_blocks,...verdict.review_flags].slice(0,3).join(', '));
+ const rivalEvidence=await investigateRivals(url,pulls,api,{max:2});
  const situation=understandSituation(offer,issue,verdict);
  const value=offer?valueAssessment(offer,{questDecision:verdict,effort:situation.effort}):null;
  // Lack of a callable service or required human outreach is not a code fix.
@@ -104,6 +106,8 @@ async function attempt(url,offer=null){
    competition_strategy:verdict.decision,
    situation:{problem_kind:situation.problem_kind,recommended_strategy:situation.recommended_strategy,acceptance_verified:false,proof_requirements:situation.proof_requirements},
    economic_value:value,
+   rival_evidence:rivalEvidence,
+   rival_scope_contrast:contrastPatch(result.files,rivalEvidence.rivals.filter(x=>Array.isArray(x.visible_paths))),
    claimed_earnings_myr:null,
    resilience:resilienceSummary(repair.attempts),
    attempts:repair.attempts,

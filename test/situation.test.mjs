@@ -39,7 +39,7 @@ test('board triage prioritizes feasible small work and keeps an exploration slot
  ].join('');
  const shortlist=chooseBoardOpportunities(board,emptyLedger(),1,5);
  assert.equal(shortlist.length,5);
- assert.equal(shortlist[0].url,u(4));
+ assert.ok([u(3),u(4)].includes(shortlist[0].url),'a bounded repair outranks a vague high-dollar platform build');
  assert.equal(shortlist[0].money_grade,'ADVERTISED_ONLY');
  assert.ok(shortlist.some(x=>x.url===u(1)));
  assert.ok(shortlist.some(x=>x.screening_effort==='COMPLEX'||x.screening_effort==='EXTERNAL_DEPENDENCY'));

@@ -9,7 +9,7 @@ const HEADER='<!-- toyol-learning-v1 -->';
 const FOOTER='<!-- /toyol-learning-v1 -->';
 const URL=/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/[1-9]\d*$/;
 const KINDS=new Set(['REPAIRABLE_MODEL_OUTPUT','UNCLASSIFIED','TRANSIENT_INFRA','VERIFY_FIRST','HARD_STOP','COMPETITION_TO_ANALYZE']);
-const OUTCOMES=new Set(['NOT_SOLVED','LOCAL_DRAFT','EVALUATED']);
+const OUTCOMES=new Set(['NOT_SOLVED','LOCAL_DRAFT','INVALID_DRAFT','EVALUATED']);
 export const emptyLedger=()=>({version:1,runs:[]});
 
 export function parseLedger(body){
@@ -55,11 +55,13 @@ export function learningAdvice(url,ledger){
  const last=(ledger?.runs||[]).filter(x=>x.url===url).slice(-5);
  const failed=last.filter(x=>x.outcome==='NOT_SOLVED');
  const drafted=last.filter(x=>x.outcome==='LOCAL_DRAFT');
+ const invalidDrafts=last.filter(x=>x.outcome==='INVALID_DRAFT').length;
  const modelFailures=failed.filter(x=>x.category==='REPAIRABLE_MODEL_OUTPUT').length;
  const transient=failed.filter(x=>x.category==='TRANSIENT_INFRA').length;
  const blocked=failed.filter(x=>x.category==='HARD_STOP').length;
  const latest=last.at(-1);
- const stage=latest?.outcome==='LOCAL_DRAFT'?'REVIEW_EXISTING_DRAFT':
+ const stage=latest?.outcome==='INVALID_DRAFT'?'CHANGE_DIAGNOSIS':
+  latest?.outcome==='LOCAL_DRAFT'?'REVIEW_EXISTING_DRAFT':
   blocked?'REVERIFY_ELIGIBILITY':
   modelFailures>=2?'CHANGE_DIAGNOSIS':
   transient?'RETRY_AFTER_INFRA_RECOVERY':
@@ -70,7 +72,7 @@ export function learningAdvice(url,ledger){
   stage==='REVERIFY_ELIGIBILITY'?-15:
   stage==='ROTATE_AND_GATHER_NEW_EVIDENCE'?-10:0;
  return {stage,priority_adjustment,observed_attempts:last.length,
-  observed_model_failures:modelFailures,prior_drafts:drafted.length,
+  observed_model_failures:modelFailures,invalidated_drafts:invalidDrafts,prior_drafts:drafted.length,
   reason:stage==='CHANGE_DIAGNOSIS'?'Repeated same model error; change evidence/approach before spending more inference':
    stage==='REVIEW_EXISTING_DRAFT'?'Review local draft before spending compute again':
    stage==='REVERIFY_ELIGIBILITY'?'Check original terms and status, not competitive pressure':

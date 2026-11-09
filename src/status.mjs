@@ -45,8 +45,10 @@ export function formatStatus(report, opts={}) {
   const intel = opts.intel && typeof opts.intel === 'object' ? opts.intel : null;
   if(intel)lines.push('','### Semakan sumber asal','',
     '- Isu diperiksa: **'+(intel.sources_checked||0)+'**',
-    '- Calon bersyarat: **'+(intel.conditional_candidates||0)+'**',
-    '- Ditolak: **'+(intel.rejected||0)+'**',
+    '- Calon boleh dicuba secara terhad: **'+(intel.conditional_candidates||0)+'**',
+    '- Calon dengan persaingan (bukan automatik gugur): **'+(intel.competitive_candidates||0)+'**',
+    '- Perlu semakan syarat dahulu: **'+(intel.needs_verification||0)+'**',
+    '- Disekat oleh syarat keselamatan/kelayakan: **'+(intel.rejected||0)+'**',
     '- Tidak dapat disahkan: **'+(intel.unverified||0)+'**');
   if(link) lines.push('- Bukti pelaksanaan: '+link);
   if(found && typeof report.issue==='string' && /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/\d+$/.test(report.issue)) {
@@ -56,7 +58,7 @@ export function formatStatus(report, opts={}) {
     lines.push('','**Sebab tugasan ditolak:**');
     for(const f of failures.slice(0,6)) lines.push('- '+safe(f.reason,110));
   }
-  if(!found) lines.push('', 'Penyelesai hanya menyokong pembetulan kod yang jelas dan sangat kecil. Ia tidak membuat serahan palsu atau melaksanakan kod pihak luar.');
+  if(!found) lines.push('', 'Tiada patch luar disahkan. Persaingan tidak lagi menjadi alasan automatik untuk menolak peluang; kesahihan pembayaran dan bukti ujian tetap diperlukan.');
   lines.push('', 'Ganjaran yang disenaraikan dalam radar **bukan** wang diperoleh.');
   return lines.join('\n')+'\n';
 }

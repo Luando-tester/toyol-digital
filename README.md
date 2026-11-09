@@ -1,12 +1,12 @@
 # 🧟 Toyol Digital
 
-**Status v0.7: otak AI tempatan Qwen 1.5B sudah berjaya diuji; masih tiada bounty diterima atau pendapatan.**
+**Status v0.9: Qwen 3B QUEST-READY (terhad), bukan INCOME-READY. Kerja luar diterima: 0. Pendapatan disahkan: RM0.**
 
 Toyol menyemak [suapan terbuka Jobbi](https://jobbi.org/gigs.json) secara berkala, mengasingkan tugasan untuk agen digital yang mengiklankan ganjaran USD/USDC, dan menyenarai pendek sehingga lapan calon. Ia menapis petunjuk deposit, staking, referral, yuran dan posting media sosial.
 
 Jika ada calon, Toyol membuka atau mengemas kini satu **GitHub Issue** supaya hasil tidak hilang. Bahagian **Quest Progress** pada Issue #1 menyatakan pencetus sebenar, bilangan calon khusus, sebab penolakan dan pendapatan yang disahkan. Semua penyenaraian ialah *petunjuk sahaja* dan perlu disahkan di sumber asal.
 
-## Operasi
+**Keputusan keluaran, lima cubaan quest luar dan syarat berhenti:** [QUEST_RELEASE_DECISION_2026-11-09.md](docs/QUEST_RELEASE_DECISION_2026-11-09.md). Pautan bukti model 3B: [run #42566050523](https://github.com/ilhamraduanbis-source/toyol-digital/actions/runs/42566050523). Model harian telah dinaik taraf kepada Qwen 3B; masih belum ada ganjaran diterima.\n\n## Operasi
 
 - **Tugas automatik**: [Toyol Radar (RM0)](../../actions/workflows/toyol.yml), dijadualkan pada minit 29 setiap jam (UTC), sekali sejam mengikut had Jobbi. Pelaksanaan cron masih belum dibuktikan oleh rekod `schedule`., tertakluk pada kelewatan GitHub Actions.
 - **Hasil imbasan**: Actions → run → Summary. Jika ada calon, semak tab Issues.
@@ -58,7 +58,7 @@ Audit automatik selepas mengimbas 657 listing: 273 lepas penapisan awal; 49 beru
 
 Syarat rasmi bagi platform khusus ejen serta halangan dompet, identiti tandatangan, penerimaan tugasan dan pengeluaran MYR telah direkod dalam [PAYOUT_GATE.md](docs/PAYOUT_GATE.md). Ini bukan kebenaran untuk mencipta dompet, membuka akaun berbayar atau menuntut tugasan. Laluan pembayaran masih belum diaktifkan.
 
-## Otak AI tempatan v0.7
+## Otak AI tempatan v0.9
 
 Model **Qwen2.5-Coder 1.5B** melalui **llama.cpp** kini berjalan di CPU GitHub Actions tanpa API berbayar. Model sebenar berjaya membetulkan contoh kod yang rosak; lihat [run bukti AI](https://github.com/ilhamraduanbis-source/toyol-digital/actions/runs/42487867606). Jambatan quest juga telah menyemak lima bounty luar, tetapi semua gagal melepasi gerbang penyertaan; tiada patch luar, serahan, penerimaan atau bayaran. Rujuk [penerangan lengkap AI Brain](docs/AI_BRAIN.md).
 

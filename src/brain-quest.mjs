@@ -37,6 +37,14 @@ export function questUrls(text){
  const matches=String(text||'').matchAll(/- Sumber asal: (https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/[1-9]\d*)/g);
  return [...new Set([...matches].map(x=>x[1]))].slice(0,12);
 }
+export function chooseQuestBatch(urls,runNumber=1,limit=MAX_TRIES){
+ const unique=[...new Set((Array.isArray(urls)?urls:[]).filter(x=>ISSUE_RE.test(x)))];
+ if(!unique.length)return [];
+ const n=Number.isFinite(Number(runNumber))?Math.max(1,Math.floor(Number(runNumber))):1;
+ const cap=Math.max(1,Math.min(MAX_TRIES,Math.floor(limit)||1));
+ const offset=((n-1)*cap)%unique.length;
+ return Array.from({length:Math.min(cap,unique.length)},(_,i)=>unique[(offset+i)%unique.length]);
+}
 export function rankFilePaths(paths,title,body=''){
  return rankEvidence(paths,title,body).map(x=>x.path);
 }
@@ -109,8 +117,9 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
  };
  try{
   const board=await getIssue();
-  const urls=questUrls(board.body).slice(0,MAX_TRIES);
+  const urls=chooseQuestBatch(questUrls(board.body),process.env.GITHUB_RUN_NUMBER||'1',MAX_TRIES);
   manifest.sampled_quest_count=urls.length;
+  manifest.selection_strategy='rotating batch of at most five distinct issues per run';
   for(const url of urls){
    try{
     const result=await runAttempt(url);

@@ -44,7 +44,7 @@ jobs:
             "https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct-GGUF/resolve/main/qwen2.5-coder-3b-instruct-q4_k_m.gguf?download=true" \
             --output "$RUNNER_TEMP/brain.gguf"
           echo "724fb256bec1ff062b2f65e4569e871ad2e95ab2a3989723d1769c54294730b7  $RUNNER_TEMP/brain.gguf" | sha256sum -c -
-      - name: Run CPU model and verify its independent patch
+      - name: Evaluate issue context, rival evidence, local fixes and cashability (no submission)
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

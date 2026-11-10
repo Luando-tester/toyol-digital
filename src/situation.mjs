@@ -4,6 +4,7 @@
  */
 import {assessEffort,valueAssessment,parseQuestBoard} from './opportunity.mjs';
 import {rankWithMemory} from './learning.mjs';
+import {firstCatchAssessment} from './first-catch.mjs';
 
 const TEST=/\b(reproduce|regression|unit test|tests?|expected|actual|steps to reproduce|acceptance)\b/i;
 const BUG=/\b(bug|fix|error|regression|crash|broken|wrong|fails?|incorrect)\b/i;
@@ -53,9 +54,12 @@ export function chooseBoardOpportunities(body,ledger,runNumber=1,limit=5){
  const offers=parseQuestBoard(body);
  const assessed=offers.map(offer=>{
   const financial=valueAssessment(offer);
-  return {...financial,offer};
+  return {...financial,offer,first_catch:firstCatchAssessment(offer)};
  });
- const eligible=assessed.filter(x=>x.eligible_to_investigate);
+ // Founder mandate: no small advertised reward enters the first paid-work
+ // shortlist. Unverified MYR/foreign conversion must first obtain a quote.
+ const eligible=assessed.filter(x=>x.eligible_to_investigate&&
+  x.first_catch.eligible_for_paid_first_catch);
  // Memory changes future decisions. Give one slot for a lower-ranked option
  // so a handful of difficult issues cannot permanently monopolize compute.
  const ranked=rankWithMemory(eligible,ledger,25);
@@ -69,7 +73,8 @@ export function chooseBoardOpportunities(body,ledger,runNumber=1,limit=5){
  return primary.slice(0,cap).map(x=>({
   url:x.issue_url,offer:x.offer,review_priority_points:x.review_priority_points,
   screening_effort:x.effort.complexity,learning:x.learning,money_grade:x.money_grade,
-  Malaysia_cashout_verified:x.payout_malaysia_verified
+  Malaysia_cashout_verified:x.payout_malaysia_verified,
+  first_catch:x.first_catch
  }));
 }
 export function composeRepairTask(issue,situation){

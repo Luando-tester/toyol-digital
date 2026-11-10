@@ -37,14 +37,17 @@ test('a draft may be described as unsubmitted but never as earned',async()=>{
  assert.equal(x.external_bounty_accepted,false);
 });
 
-test('first paid win does not accept a sub-USD200 opportunity through legacy fallback',async()=>{
+test('USD3 is allowed as a field learning opportunity, not a USD200 income claim',async()=>{
  let attempted=0;
  const x=await main({
-  getIssue:async()=>({body:'### 1. Tiny gig\n- Sumber asal: https://github.com/acme/repo/issues/3\n- Ganjaran diiklankan: 3 USD\n- Board: algora | gred indeks: B | status dana: escrowed'}),
-  runAttempt:async()=>{attempted++;return {status:'AI_DRAFT_CREATED_NOT_SUBMITTED'};}
+  getIssue:async()=>({body:'### 1. Small real issue\n- Sumber asal: https://github.com/acme/repo/issues/3\n- Ganjaran diiklankan: 3 USD\n- Board: algora | gred indeks: B | status dana: escrowed\n- Ringkasan: Fix README typo'}),
+  runAttempt:async()=>{attempted++;return {status:'AI_DRAFT_CREATED_NOT_SUBMITTED',issue:'https://github.com/acme/repo/issues/3',earned_amount_verified:0};}
  });
- assert.equal(x.status,'NO_USD200_PLUS_PAID_QUEST_IN_BOARD');
- assert.equal(attempted,0);
+ assert.equal(attempted,1);
+ assert.equal(x.sampled_quest_count,1);
+ assert.equal(x.status,'AI_DRAFT_CREATED_NOT_SUBMITTED');
+ assert.equal(x.earned_amount_verified,0);
+ assert.equal(x.advanced_competency_goal.not_a_bounty_filter,true);
 });
 
 test('resilience quest rotation makes progress beyond the same first five tasks',()=>{

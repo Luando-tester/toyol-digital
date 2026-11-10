@@ -7,6 +7,10 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/world-radar.yml'
+      - 'src/paid-task-radar.mjs'
+      - 'src/original-issue-gate.mjs'
+      - 'test/paid-task-radar.test.mjs'
+      - 'test/original-issue-gate.test.mjs'
 permissions:
   contents: read
 concurrency:
@@ -25,7 +29,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Confirm money and task safety gate
-        run: node --test test/paid-task-radar.test.mjs
+        run: node --test test/paid-task-radar.test.mjs test/original-issue-gate.test.mjs
       - name: Refresh free-entry bounty and benchmark leads across live markets
         run: node src/paid-task-radar.mjs
         env:

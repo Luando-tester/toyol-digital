@@ -30,24 +30,25 @@ test('model prompt describes strategy and does not claim a complete solution',()
 });
 test('board triage prioritizes feasible small work and keeps an exploration slot',()=>{
  const board='# Bounties\n'+[
-  line(1,'Fix README typo',2),
-  line(2,'Build full stack video call architecture',200),
-  line(3,'Fix parser error',4),
-  line(4,'Fix JSON schema bug',5),
+  line(1,'Fix README typo',250),
+  line(2,'Build full stack video call architecture',900),
+  line(3,'Fix parser error',220),
+  line(4,'Fix JSON schema bug',500),
   line(5,'Integrate external OAuth payment gateway',100),
   line(6,'Fix documentation spelling',1)
  ].join('');
  const shortlist=chooseBoardOpportunities(board,emptyLedger(),1,5);
- assert.equal(shortlist.length,5);
- assert.ok([u(3),u(4)].includes(shortlist[0].url),'a bounded repair outranks a vague high-dollar platform build');
+ assert.equal(shortlist.length,4);
+ assert.ok([u(1),u(3),u(4)].includes(shortlist[0].url),'a bounded USD200+ repair outranks a vague high-dollar platform build');
  assert.equal(shortlist[0].money_grade,'ADVERTISED_ONLY');
  assert.ok(shortlist.some(x=>x.url===u(1)));
- assert.ok(shortlist.some(x=>x.screening_effort==='COMPLEX'||x.screening_effort==='EXTERNAL_DEPENDENCY'));
+ assert.ok(shortlist.every(x=>x.first_catch.eligible_for_paid_first_catch));
+ assert.ok(shortlist.some(x=>x.screening_effort==='COMPLEX'));
 });
 test('repeated source failures change what gets sampled without permanent blacklisting',()=>{
  let ledger=emptyLedger();
  for(const run of [1,2,3])ledger=recordLearning(ledger,{evaluated:[{url:u(4),category:'REPAIRABLE_MODEL_OUTPUT',attempts:[{},{}]}]},run);
- const board=line(4,'Fix README typo',3)+line(5,'Fix README typo',2)+line(6,'Fix README typo',1)+line(7,'Fix README typo',1)+line(8,'Fix README typo',1)+line(9,'Fix README typo',1);
+ const board=line(4,'Fix README typo',300)+line(5,'Fix README typo',250)+line(6,'Fix README typo',210)+line(7,'Fix README typo',205)+line(8,'Fix README typo',200)+line(9,'Fix README typo',210);
  const x=chooseBoardOpportunities(board,ledger,2,5);
  assert.equal(x.length,5);
  const older=x.find(y=>y.url===u(4));

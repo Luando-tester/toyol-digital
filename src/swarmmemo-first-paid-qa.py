@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -107,6 +108,13 @@ def regression_code():
     ])
 
 def run(execute):
+    # Prewarm before the 00:00 UTC opening to avoid top-of-hour scheduler congestion.
+    if execute and datetime.now(timezone.utc).date().isoformat() == '2026-11-10':
+        opening = datetime(2026, 11, 11, tzinfo=timezone.utc)
+        seconds = (opening - datetime.now(timezone.utc)).total_seconds()
+        if 0 < seconds <= 600:
+            announce('Prewarmed before real daily paid-seat opening; awaiting eligibility.')
+            time.sleep(seconds + 1)
     status = work()
     announce("Live SwarmMemo task: open_seats=" + str((status.get("standing") or {}).get("open")) +
              " claimable=" + str(status.get("claimable")))

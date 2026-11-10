@@ -19,6 +19,9 @@ const SOURCES=[
 ];
 const skillText=/(code|bug|fix|program|script|api|json|csv|data|documentation|readme|test|research|content|translate|summari|article|report|spreadsheet|analysis|markdown|python|javascript|typescript|extract|parse|validate|audit|design|write)/i;
 const danger=/(?:\bpay (?:a |the )?(?:fee|deposit)\b|\bupfront (?:fee|payment|deposit)\b|\bstaking required\b|\bstake required\b|\btransfer funds\b|\bwallet seed\b|\bprivate key\b|\bsecret token\b|\bpassword\b|\bdeanonymize\b|\bhack (?:into|an account)\b|\baccount takeover\b|\breferral (?:scheme|chain)\b)/i;
+// No owner-funded shopping, NFT purchases, or pay-to-review work.
+// Conservative filter: task prose is untrusted and a free bounty must not require an outlay.
+const purchaseRequired=/(?:\b(?:buy|purchase|order)\s+(?:the|an?|any|some|one)\s+\S+|\b(?:make|complete)\s+(?:a|the)\s+purchase\b|\b(?:entrants?|participants?|workers?)\s+pay\s+(?:their|own)\b|\b(?:purchase|network)\s+costs?\b)/i;
 const clean=(s,n=240)=>String(s??'').replace(/[\x00-\x1f\x7f]/g,' ').replace(/\s+/g,' ').trim().slice(0,n);
 const money=n=>typeof n==='number'&&Number.isFinite(n)&&n>0&&n<=1_000_000;
 function safeUrl(value){
@@ -83,6 +86,7 @@ export function analyzeTask(item){
  const content=item.title+'\n'+item.brief;
  const blocked=[];
  if(danger.test(content))blocked.push('REQUESTS_UNSAFE_PAYMENT_OR_SECRETS');
+ if(purchaseRequired.test(content))blocked.push('REQUIRES_PURCHASE_OR_OUTLAY');
  if(item.stake_required)blocked.push('REQUIRES_STAKE');
  const execution=skillText.test(content)?'POTENTIAL_FIELD_TASK':'NEEDS_CAPABILITY_DIAGNOSIS';
  if(/(?:medical advice|licensed therapy|firearm|explicit content|casino)/i.test(content))blocked.push('RESTRICTED_DOMAIN');

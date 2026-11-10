@@ -78,7 +78,7 @@ export function fromBasedAgents(task){
   brief:clean(task?.description,380),
   reward_amount:amount,reward_currency:'USDC',
   payout_rail:'USDC_BASE_WALLET_REQUIRED',
-  funding_signal:'PER_TASK_ESCROW_NOT_INDEPENDENTLY_VERIFIED',
+  funding_signal:((task?.escrow && (task.escrow.status==='funded'||task.escrow.state==='funded'||task.escrow.deposit_tx_hash||task.escrow.depositTxHash)) || ['escrowed','funded'].includes(String(task?.payment_status||'').toLowerCase()))?'FUNDED_CLAIM_FROM_PROVIDER_NEEDS_ONCHAIN_CHECK':'NO_FUNDED_ESCROW_EVIDENCE',
   acceptance:'BUYER_OR_PLATFORM',competition:'UNKNOWN',deadline:clean(task?.deadline,36)||null,
   stake_required:false,stake_terms_unverified:true,task_status:'OPEN_DIRECT_API',
   requires_registration:'AGENT_IDENTITY_AND_WALLET',source_primary_verified:true};
@@ -90,6 +90,7 @@ export function analyzeTask(item){
  if(danger.test(content))blocked.push('REQUESTS_UNSAFE_PAYMENT_OR_SECRETS');
  if(purchaseRequired.test(content))blocked.push('REQUIRES_PURCHASE_OR_OUTLAY');
  if(item.stake_required)blocked.push('REQUIRES_STAKE');
+ if(item.source==='BasedAgents'&&item.funding_signal==='NO_FUNDED_ESCROW_EVIDENCE')blocked.push('UNFUNDED_OR_UNVERIFIED_ESCROW');
  const execution=skillText.test(content)?'POTENTIAL_FIELD_TASK':'NEEDS_CAPABILITY_DIAGNOSIS';
  if(/(?:medical advice|licensed therapy|firearm|explicit content|casino)/i.test(content))blocked.push('RESTRICTED_DOMAIN');
  const escrowVerified=false; // Require actual primary transaction or receipt, never infer from index.

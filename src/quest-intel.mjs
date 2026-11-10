@@ -31,7 +31,7 @@ async function getGitHub(path,token){
  }finally{clearTimeout(timer);}
 }
 export function sampleTasks(items,limit=4){
- return shortlist(items,1000).filter(x=>boards.has(x.source)&&issueLink.test(x.url)&&x.currency==='USD'&&x.amount>=200)
+ return shortlist(items,1000).filter(x=>boards.has(x.source)&&issueLink.test(x.url))
    .sort((a,b)=>b.score-a.score||a.amount-b.amount).slice(0,limit);
 }
 export async function inspect(items,{githubGet=getGitHub,limit=4,now=Date.now(),token=''}={}){

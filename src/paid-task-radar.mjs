@@ -33,6 +33,7 @@ export function fromJobbi(item){
   url,title:clean(item.title,140),brief:clean(item.content_text||item.summary,380),
   reward_amount:amount,reward_currency:clean(r.currency,16).toUpperCase(),
   payout_rail:clean(r.rail,50)||'UNKNOWN',
+  source_grade:clean(x.payout_grade,12)||'UNKNOWN',
   funding_signal:clean(x.payment_state,45)||'UNKNOWN',
   acceptance:clean(x.acceptance_type||x.acceptance,70)||'UNKNOWN',
   competition:'UNKNOWN',deadline:clean(x.expires,36)||null,
@@ -91,6 +92,10 @@ export function analyzeTask(item){
  priority+=item.source_primary_verified?9:0;
  priority-=item.reward_currency.includes('UNVERIFIED')?10:0;
  priority-=item.payout_rail.includes('WALLET')?8:0;
+ if(['C','C-','D','D-'].includes(item.source_grade))priority-=18;
+ if(item.funding_signal==='promised')priority-=12;
+ if(item.source==='Taskmarket')priority+=12;
+ if(item.source==='BasedAgents')priority+=10;
  if(item.reward_amount<=10)priority+=5; // Micro gigs are allowed, not discarded.
  if(blocked.length)priority=0;
  return {...item,
@@ -119,7 +124,20 @@ export function shortlist(records,limit=14){
  const high=list.filter(x=>x.reward_amount>=200).slice(0,Math.min(4,cap));
  const picked=[...small,...medium,...high];
  for(const x of list){if(picked.length>=cap)break;if(!picked.includes(x))picked.push(x);}
- return picked.slice(0,cap);
+ // A weak index must not crowd out the direct provider whose terms we can inspect.
+ const selected=picked.slice(0,cap);
+ const direct=list.filter(x=>x.source==='Taskmarket'||x.source==='BasedAgents');
+ if(selected.length>=3&&direct.length){
+  const choices=['Taskmarket','BasedAgents'].map(name=>direct.find(x=>x.source===name)).filter(Boolean);
+  for(const x of choices){
+   if(selected.some(y=>y.url===x.url))continue;
+   let idx=selected.findLastIndex(y=>y.source.startsWith('Jobbi')&&
+     !choices.some(k=>k.url===y.url));
+   if(idx<0)idx=selected.length-1;
+   selected[idx]=x;
+  }
+ }
+ return [...new Map(selected.map(x=>[x.url,x])).values()];
 }
 export function report(data){
  const lines=[
@@ -163,7 +181,8 @@ export async function scan(fetchJSON=getJSON){
     Array.isArray(x)?x:Array.isArray(x.tasks)?x.tasks:Array.isArray(x.data)?x.data:[];
    const mapped=rows.slice(0,1000).map(s.name.startsWith('Jobbi')?fromJobbi:
     s.name==='Taskmarket bounty'?fromTaskmarket:fromBasedAgents).filter(Boolean);
-   sources.push({name:s.name,status:'OK',count:rows.length,normalized:mapped.length});
+   sources.push({name:s.name,status:'OK',count:rows.length,normalized:mapped.length,
+    examples:mapped.slice(0,8).map(t=>({title:t.title,url:t.url,amount:t.reward_amount,currency:t.reward_currency,brief:t.brief.slice(0,160)}))});
    all.push(...mapped);
   }catch(e){sources.push({name:s.name,status:'ERROR',count:0,error:clean(e?.message,110)});}
  }

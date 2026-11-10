@@ -144,16 +144,16 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
   manifest.learning_source=loaded?.source||'UNAVAILABLE';
   const runNo=process.env.GITHUB_RUN_NUMBER||'1';
   const opportunities=chooseBoardOpportunities(board.body,ledger,runNo,MAX_TRIES);
-  const choices=opportunities.length?opportunities:
-    chooseQuestBatch(questUrls(board.body),runNo,MAX_TRIES).map(url=>({url,offer:null}));
+  const choices=opportunities;
   manifest.sampled_quest_count=choices.length;
-  manifest.selection_strategy=opportunities.length?
-   'economic feasibility, evidence, prior setbacks, one exploratory slot':
-   'rotating fallback for legacy quest board without reward metadata';
+  manifest.first_catch_target={currency:'USD',minimum_net:200,single_paid_engagement:true};
+  if(!choices.length)manifest.status='NO_USD200_PLUS_PAID_QUEST_IN_BOARD';
+  manifest.selection_strategy='USD200+ first-catch gate, then economic feasibility, evidence and memory';
   manifest.opportunity_screen=opportunities.map(x=>({
    issue:x.url,priority:x.review_priority_points,effort:x.screening_effort,
    advertised_reward:x.offer?.advertised_amount,advertised_currency:x.offer?.currency,
    money_grade:x.money_grade,payout_malaysia_verified:x.Malaysia_cashout_verified,
+   first_catch_status:x.first_catch?.status,
    learning:x.learning?.stage
   }));
   for(const {url,offer} of choices){

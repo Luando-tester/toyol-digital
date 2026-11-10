@@ -1,0 +1,61 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {fromJobbi,fromTaskmarket,fromBasedAgents,analyzeTask,shortlist,scan} from '../src/paid-task-radar.mjs';
+const source={id:'algora:1',title:'Fix a Python data parser',url:'https://github.com/example/example/issues/4',
+  content_text:'Write test and fix parser',_jobbi:{lane:'agent',reward:{amount:0.01,currency:'USD',rail:'stripe'},
+  payment_state:'escrowed',acceptance_type:'review',source:'algora',claims_open:true}};
+test('legal one cent work is not excluded by size, nor called income',()=>{
+ const t=analyzeTask(fromJobbi(source));
+ assert.equal(t.reward_amount,0.01);
+ assert.equal(t.earned_myr_verified,0);
+ assert.equal(t.funding_from_primary_verified,false);
+ assert.equal(t.suitable_for_draft,true);
+});
+test('open unrelated human job cannot enter paid task radar',()=>{
+ assert.equal(fromJobbi({...source,_jobbi:{...source._jobbi,lane:'human'}}),null);
+});
+test('unclaimed other people funds are not an opportunity class',()=>{
+ const t=analyzeTask(fromJobbi({...source,title:'Take another persons wallet private key and transfer funds'}));
+ assert.equal(t.eligibility.status,'REJECT');
+ assert.equal(t.suitable_for_draft,false);
+});
+test('Taskmarket 6-decimal units are not mistaken for millions of USD',()=>{
+ const id='0x'+'a'.repeat(64);
+ const t=analyzeTask(fromTaskmarket({id,status:'open',reward:'1200000',description:'Create a CSV parser',stakeRequired:false,
+   chainId:8453,escrowTxHash:'0x'+ 'b'.repeat(64)}));
+ assert.equal(t.reward_amount,1.2);
+ assert.equal(t.reward_currency,'USDC');
+ assert.equal(t.funding_from_primary_verified,false);
+ assert.equal(t.MYR_cashout_verified,false);
+});
+test('Taskmarket stake requirement is not allowed with owner's cash',()=>{
+ const id='0x'+'a'.repeat(64);
+ assert.equal(fromTaskmarket({id,status:'open',reward:'2000000',description:'Fix code',stakeRequired:true}),null);
+});
+test('BasedAgents tasks are not assumed escrowed based on brand',()=>{
+ const t=analyzeTask(fromBasedAgents({id:'task_abcdef',status:'open',bounty_amount:3,title:'Write markdown docs'}));
+ assert.equal(t.reward_amount,3);
+ assert.equal(t.funding_signal,'PER_TASK_ESCROW_NOT_INDEPENDENTLY_VERIFIED');
+ assert.equal(t.earned_myr_verified,0);
+});
+test('shortlist includes micro, middle and high values without min bounty gate',()=>{
+ const values=[0.01,0.3,5,20,50,180,200,700].map((reward_amount,i)=>({
+  id:String(i),source:'Fixture',url:'https://example.org/task/'+i,title:'Fix JSON '+i,
+  brief:'Write JSON parsing test',reward_amount,reward_currency:'USD',payout_rail:'BANK',
+  stake_required:false,source_primary_verified:false}));
+ const chosen=shortlist(values);
+ assert.ok(chosen.some(x=>x.reward_amount<1));
+ assert.ok(chosen.some(x=>x.reward_amount>=200));
+ assert.ok(chosen.some(x=>x.reward_amount>10&&x.reward_amount<200));
+});
+test('partial API outages are not silently presented as a healthy zero',async()=>{
+ const x=await scan(async url=>{
+  if(url.includes('taskmarket'))throw Error('HTTP 429');
+  if(url.includes('basedagents'))return {tasks:[]};
+  return {items:[source]};
+ });
+ assert.equal(x.sources.length,3);
+ assert.equal(x.sources.filter(y=>y.status==='ERROR').length,1);
+ assert.equal(x.tasks.length,1);
+ assert.equal(x.verified_myr_received,0);
+});

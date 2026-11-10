@@ -59,3 +59,14 @@ test('partial API outages are not silently presented as a healthy zero',async()=
  assert.equal(x.tasks.length,1);
  assert.equal(x.verified_myr_received,0);
 });
+
+test('purchase-required Taskmarket bounty is rejected under RM0 policy',()=>{
+ const id='0x'+'a'.repeat(64);
+ const listing=fromTaskmarket({id,status:'open',reward:'15000000',chainId:8453,mode:'bounty',
+   description:'Shop Lumen House and tell us how it went. Buy the Manifest Kit. Buy an Interface Check. Buy any NFT. Entrants pay their own purchases and network costs.'});
+ const candidate=analyzeTask(listing);
+ assert.equal(candidate.eligibility.status,'REJECT');
+ assert.ok(candidate.eligibility.reasons.includes('REQUIRES_PURCHASE_OR_OUTLAY'));
+ assert.equal(candidate.suitable_for_draft,false);
+ assert.equal(shortlist([listing]).length,0);
+});

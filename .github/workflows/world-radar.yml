@@ -1,8 +1,8 @@
-name: Toyol World Radar — Global Opportunities (MYR-first)
+name: Toyol Paid Tasks — Agent Earning Opportunities
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 0 * * *'
+    - cron: '17 */6 * * *'
   push:
     branches: [main]
     paths:
@@ -10,31 +10,31 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: toyol-world-radar
+  group: toyol-paid-task-radar
   cancel-in-progress: false
 jobs:
-  world-discovery:
-    runs-on: ubuntu-latest
+  paid-tasks:
+    runs-on: ubuntu-24.04
     timeout-minutes: 7
     permissions:
       contents: read
       issues: write
     steps:
-      - name: Checkout Toyol only
+      - name: Checkout Toyol (do not persist credentials)
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Verify the real-source scanner, not AI payout claims
-        run: node --test test/world-radar.test.mjs
-      - name: Field scan Malaysia and worldwide opportunities including official RWS Malay posts
-        run: node src/world-radar.mjs
+      - name: Confirm money and task safety gate
+        run: node --test test/paid-task-radar.test.mjs
+      - name: Scout paid work from 12 agent boards and direct marketplaces
+        run: node src/paid-task-radar.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Preserve discovery results and original links
+      - name: Preserve source offers and rejection evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: toyol-world-leads
-          path: out/world/
+          name: toyol-paid-tasks
+          path: out/paid-tasks/
           if-no-files-found: ignore
           retention-days: 7

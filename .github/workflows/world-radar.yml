@@ -26,7 +26,7 @@ jobs:
           persist-credentials: false
       - name: Confirm money and task safety gate
         run: node --test test/paid-task-radar.test.mjs
-      - name: Scout paid work from 12 agent boards and direct marketplaces
+      - name: Search real paid agent tasks — micro to premium, not human jobs
         run: node src/paid-task-radar.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

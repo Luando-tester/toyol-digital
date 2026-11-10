@@ -10,7 +10,7 @@ const issue=(overrides={})=>({
 const gig=(title='Fix some parser output')=>({
  id:'algora:1',title,url:'https://github.com/example/sample/issues/23',
  content_text:'Fix a parser bug with a reproducible test.',
- _jobbi:{lane:'agent',reward:{amount:2,currency:'USD'},payment_state:'escrowed',payout_grade:'B',source:'algora',claims_open:true}
+ _jobbi:{lane:'agent',reward:{amount:250,currency:'USD'},payment_state:'escrowed',payout_grade:'B',source:'algora',claims_open:true}
 });
 const NOW=Date.parse('2026-11-08T12:00:00Z');
 test('original issue can pass only provisional public checks',()=>{

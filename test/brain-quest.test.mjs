@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {questUrls,chooseQuestBatch,rankFilePaths,main} from '../src/brain-quest.mjs';
 import {readFileSync,existsSync,rmSync} from 'node:fs';
+const premiumBoard='### 1. Fix parser issue\n- Sumber asal: https://github.com/acme/repo/issues/15\n- Ganjaran diiklankan: 250 USD\n- Board: algora | gred indeks: B | status dana: escrowed\n- Penerimaan: human-review\n- Ringkasan: Fix parser with tests';
 
 test('only GitHub issues listed as original bounty sources are selected',()=>{
  const body=['- Sumber asal: https://github.com/acme/code/issues/12',
@@ -18,7 +19,7 @@ test('ranks source files related to task while excluding private or unsafe files
 });
 test('real quest bridge records honest failed eligibility without pretending income',async()=>{
  const x=await main({
-  getIssue:async()=>({body:'- Sumber asal: https://github.com/acme/repo/issues/15'}),
+  getIssue:async()=>({body:premiumBoard}),
   runAttempt:async()=>{throw Error('human-only participation');}
  });
  assert.equal(x.sampled_quest_count,1);
@@ -28,12 +29,22 @@ test('real quest bridge records honest failed eligibility without pretending inc
 });
 test('a draft may be described as unsubmitted but never as earned',async()=>{
  const x=await main({
-  getIssue:async()=>({body:'- Sumber asal: https://github.com/acme/repo/issues/15'}),
+  getIssue:async()=>({body:premiumBoard}),
   runAttempt:async()=>({status:'AI_DRAFT_CREATED_NOT_SUBMITTED',issue:'https://github.com/acme/repo/issues/15',edited_files:['src/fix.js'],earned_amount_verified:0})
  });
  assert.equal(x.status,'AI_DRAFT_CREATED_NOT_SUBMITTED');
  assert.equal(x.earned_amount_verified,0);
  assert.equal(x.external_bounty_accepted,false);
+});
+
+test('first paid win does not accept a sub-USD200 opportunity through legacy fallback',async()=>{
+ let attempted=0;
+ const x=await main({
+  getIssue:async()=>({body:'### 1. Tiny gig\n- Sumber asal: https://github.com/acme/repo/issues/3\n- Ganjaran diiklankan: 3 USD\n- Board: algora | gred indeks: B | status dana: escrowed'}),
+  runAttempt:async()=>{attempted++;return {status:'AI_DRAFT_CREATED_NOT_SUBMITTED'};}
+ });
+ assert.equal(x.status,'NO_USD200_PLUS_PAID_QUEST_IN_BOARD');
+ assert.equal(attempted,0);
 });
 
 test('resilience quest rotation makes progress beyond the same first five tasks',()=>{

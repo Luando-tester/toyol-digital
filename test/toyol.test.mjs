@@ -39,8 +39,12 @@ test('expired gigs excluded', () => {
   assert.equal(parseGig(fixture({ _jobbi: { ...fixture()._jobbi, expires: '2020-01-01' } })), null);
 });
 test('duplicate IDs removed, report clearly says no earnings', () => {
-  const gigs = shortlist([fixture(), fixture(), fixture({ id: 'other:23', title: 'Fix another JSON parser issue' })]);
+  const bigger = props => fixture({
+   _jobbi: {...fixture()._jobbi,reward:{amount:250,currency:'USD'}},...props
+  });
+  const gigs = shortlist([fixture(), bigger(), bigger(), bigger({ id: 'other:23', title: 'Fix another JSON parser issue' })]);
   assert.equal(gigs.length, 2);
+  assert.ok(gigs.every(x=>x.amount>=200&&x.currency==='USD'));
   const report = formatReport(gigs);
   assert.match(report, /BUKAN PENDAPATAN/);
   assert.match(report, /tidak menuntut tugasan/);

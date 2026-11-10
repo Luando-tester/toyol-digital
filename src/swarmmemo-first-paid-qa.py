@@ -119,6 +119,7 @@ def run(execute):
     announce("Live SwarmMemo task: open_seats=" + str((status.get("standing") or {}).get("open")) +
              " claimable=" + str(status.get("claimable")))
     if not execute:
+        announce("Selected route available in this task thread: " + str(unique_route()))
         announce("Read only. No post or claim.")
         return
     if datetime.now(timezone.utc).date().isoformat() != "2026-11-11":

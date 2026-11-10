@@ -32,8 +32,8 @@ test('world radar tolerates one API failing and preserves source failure evidenc
    applicationLink:'https://himalayas.app/companies/x/jobs/y',
    companyName:'Acme',employmentType:'Contractor',locationRestrictions:['Malaysia']}]};
  });
- assert.equal(count,7);
- assert.equal(x.sources.filter(s=>s.status==='ERROR').length,3);
+ assert.equal(count,9);
+ assert.equal(x.sources.filter(s=>s.status==='ERROR').length,5);
  assert.ok(x.leads.length>0);
  assert.equal(x.verified_received_myr,0);
 });

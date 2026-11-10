@@ -47,8 +47,9 @@ export function parseGig(item, now = Date.now()) {
   if (state === 'escrowed') score += 35;
   else if (state === 'funded') score += 30;
   else if (state === 'promised') score -= 10;
-  if (amount <= 25) score += 12;
-  else if (amount <= 100) score += 6;
+  // Minimum USD200 belongs to the paid-first-catch mandate, not model competence.
+  // Small bounty rewards must not dominate the launch radar.
+  if (currency === 'USD' && amount >= 200) score += 8;
   if (/machine|automatic|on.chain/i.test(acceptance)) score += 7;
   if (/human|manual|review/i.test(acceptance)) score -= 8;
   return { id, title, summary, url, amount, currency, source, state, acceptance, grade, score };
@@ -56,7 +57,8 @@ export function parseGig(item, now = Date.now()) {
 
 export function shortlist(items, limit = 8, now = Date.now()) {
   const seen = new Set();
-  return (items || []).map(item => parseGig(item, now)).filter(Boolean)
+  return (items || []).map(item => parseGig(item, now))
+    .filter(g => g && g.currency === 'USD' && g.amount >= 200)
     .sort((a,b) => b.score - a.score || a.amount - b.amount)
     .filter(g => { if (seen.has(g.id)) return false; seen.add(g.id); return true; })
     .slice(0, limit);
@@ -64,7 +66,8 @@ export function shortlist(items, limit = 8, now = Date.now()) {
 
 export function formatReport(gigs, generatedAt = '') {
   const out = [
-    '# 🧟 Toyol Radar', '',
+    '# 🧟 Toyol Radar — USD200+ First Catch', '',
+    '**Sasaran komersial: sekurang-kurangnya USD200 bersih daripada SATU kerja yang benar-benar dibayar dan boleh dikeluarkan di Malaysia.**', '',
     '**Status: CALON TUGASAN, BUKAN PENDAPATAN.**', '',
     'Sumber: [Jobbi](https://jobbi.org/gigs), indeks awam yang bukan pembayar.',
     'Tiada deposit, staking, yuran, iklan atau posting media sosial dibenarkan.',
@@ -72,7 +75,7 @@ export function formatReport(gigs, generatedAt = '') {
     'Toyol tidak menuntut tugasan, menyerahkan hasil, atau menerima bayaran.', ''
   ];
   if (generatedAt) out.push('Disemak (UTC): ' + generatedAt, '');
-  if (!gigs.length) out.push('Tiada calon lulus saringan awal.', '');
+  if (!gigs.length) out.push('Tiada tawaran USD200+ lulus saringan awal. Ini bukan bukti bahawa peluang sebegitu tiada di pasaran lain.', '');
   for (const [i,g] of gigs.entries()) {
     out.push(
       '### ' + (i+1) + '. ' + escapeMd(g.title),

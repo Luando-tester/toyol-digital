@@ -35,7 +35,10 @@ test("Taskmarket stake requirement is not allowed with owner money",()=>{
 test('BasedAgents tasks are not assumed escrowed based on brand',()=>{
  const t=analyzeTask(fromBasedAgents({id:'task_abcdef',status:'open',bounty_amount:3,title:'Write markdown docs'}));
  assert.equal(t.reward_amount,3);
- assert.equal(t.funding_signal,'PER_TASK_ESCROW_NOT_INDEPENDENTLY_VERIFIED');
+ assert.equal(t.funding_signal,'NO_FUNDED_ESCROW_EVIDENCE');
+ assert.equal(t.suitable_for_draft,false);
+ assert.ok(t.eligibility.reasons.includes('UNFUNDED_OR_UNVERIFIED_ESCROW'));
+ assert.equal(shortlist([fromBasedAgents({id:'task_abcdef',status:'open',bounty_amount:3,title:'Write markdown docs'})]).length,0);
  assert.equal(t.earned_myr_verified,0);
 });
 test('shortlist includes micro, middle and high values without min bounty gate',()=>{
@@ -75,4 +78,12 @@ test('Tempo or unverified Taskmarket token cannot be offered to Base-only Toyol 
  const id='0x'+'a'.repeat(64);
  assert.equal(fromTaskmarket({id,status:'open',chainId:4217,reward:'100000000',mode:'bounty',description:'Produce video'}),null);
  assert.ok(fromTaskmarket({id,status:'open',chainId:8453,reward:'100000000',mode:'bounty',description:'Produce code'}));
+});
+
+test('BasedAgents escrow claim is lead-only pending verification of actual deposit',()=>{
+ const t=analyzeTask(fromBasedAgents({id:'task_funded123',status:'open',bounty_amount:2,title:'Write short report',
+   payment_status:'funded',escrow:{status:'funded'}}));
+ assert.equal(t.funding_signal,'FUNDED_CLAIM_FROM_PROVIDER_NEEDS_ONCHAIN_CHECK');
+ assert.equal(t.funding_from_primary_verified,false);
+ assert.equal(t.earned_myr_verified,0);
 });

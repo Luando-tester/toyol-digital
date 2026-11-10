@@ -146,14 +146,15 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
   const opportunities=chooseBoardOpportunities(board.body,ledger,runNo,MAX_TRIES);
   const choices=opportunities;
   manifest.sampled_quest_count=choices.length;
-  manifest.first_catch_target={currency:'USD',minimum_net:200,single_paid_engagement:true};
-  if(!choices.length)manifest.status='NO_USD200_PLUS_PAID_QUEST_IN_BOARD';
-  manifest.selection_strategy='USD200+ first-catch gate, then economic feasibility, evidence and memory';
+  manifest.advanced_competency_goal={benchmark:'capacity to deliver responsibly on jobs around USD200 and above',not_a_bounty_filter:true};
+  if(!choices.length)manifest.status='NO_SUITABLE_QUEST_IN_BOARD';
+  manifest.selection_strategy='field evidence and learning history, with a challenging opportunity slot; no USD minimum';
   manifest.opportunity_screen=opportunities.map(x=>({
    issue:x.url,priority:x.review_priority_points,effort:x.screening_effort,
    advertised_reward:x.offer?.advertised_amount,advertised_currency:x.offer?.currency,
    money_grade:x.money_grade,payout_malaysia_verified:x.Malaysia_cashout_verified,
-   first_catch_status:x.first_catch?.status,
+   growth_role:x.learning_role,
+   aspiration_signal:x.first_catch?.status,
    learning:x.learning?.stage
   }));
   for(const {url,offer} of choices){
@@ -193,7 +194,7 @@ export async function main({getIssue=()=>api('/repos/'+REPO+'/issues/1'),runAtte
   for(const x of (manifest.opportunity_screen||[]).slice(0,5)){
    lines.push('- '+x.issue+' — advertised '+x.advertised_reward+' '+x.advertised_currency+
     ' — screening '+x.priority+'/100 ('+x.effort+') — '+x.money_grade+
-    ' — prior result '+(x.learning||'NONE'));
+    ' — growth '+(x.growth_role||'UNCLASSIFIED')+' — prior result '+(x.learning||'NONE'));
   }
   lines.push('','### Real-issue attempts','');
   for(const x of manifest.evaluated.slice(0,5))lines.push('- '+x.url+' — '+(x.category||'UNVERIFIED')+' — '+x.reason+' — '+(x.attempts?.length||0)+' local attempts');

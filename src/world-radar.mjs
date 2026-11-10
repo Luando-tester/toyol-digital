@@ -85,6 +85,10 @@ export function assessLead(x){
  if(x.region==='LOCATION_RESTRICTED')return null;
  // Native Chinese/Japanese/Korean/etc. fluency is not a proven Toyol capability.
  if(/(?:chinese|mandarin|cantonese|japanese|korean|german|french|spanish|bengali|tamil|telugu|hindi|portuguese|traditional chinese)/i.test(x.title))return null;
+ // Never target licensed clinical or doctorate-specific roles on a keyword match.
+ if(/(?:psychiatrist|psychologist|medical doctor|clinical physician|registered nurse|licensed therapist|ph\.d\.?|phd required)/i.test(x.title))return null;
+ // "Malay (Singapore)" is not a confirmed Malaysian hiring location.
+ if(/\bsingapore\b/i.test(x.title)&&x.region!=='MALAYSIA_INCLUDED')return null;
  let score=25;
  const type=x.employment.toLowerCase();
  if(/contract|freelanc|part.time|temporary/.test(type))score+=25;
@@ -121,7 +125,7 @@ export function makeReport(data){
  const lines=[
   '## World Radar — peluang kerja luar GitHub','',
   '**Status: LEADS ONLY. RM0 income verified.**','',
-  'Sumber API rasmi: [Himalayas](https://himalayas.app/api) dan [Remotive](https://remotive.com/remote-jobs/api).',
+  'Sumber API rasmi: [Himalayas](https://himalayas.app/api), [Remotive](https://remotive.com/remote-jobs/api) dan [RWS melalui Lever](https://jobs.lever.co/rws).',
   'Tiada pembidaan, permohonan, penyamaran, yuran, atau pemprosesan wang dibuat.','',
   '**Penting:** jawatan kontrak/remote bukan bermaksud kerja mikro boleh dilaksanakan oleh ejen AI. Kelayakan Malaysia, penerimaan kerja dan saluran bayaran wajib disahkan.',''
  ];

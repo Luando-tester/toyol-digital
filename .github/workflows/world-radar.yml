@@ -26,7 +26,7 @@ jobs:
           persist-credentials: false
       - name: Verify the real-source scanner, not AI payout claims
         run: node --test test/world-radar.test.mjs
-      - name: Search official Himalayas and Remotive APIs
+      - name: Search Himalayas, Remotive and RWS Malay roles (official public APIs)
         run: node src/world-radar.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

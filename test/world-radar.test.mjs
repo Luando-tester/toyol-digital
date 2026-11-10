@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeHimalayas,normalizeRemotive,selectLeads,scanSources,makeReport} from '../src/world-radar.mjs';
+import {normalizeHimalayas,normalizeRemotive,normalizeLever,selectLeads,scanSources,makeReport} from '../src/world-radar.mjs';
 test('Malaysia contractor listing is visible but payment never assumed',()=>{
  const raw={title:'Malay content writer',companyName:'Example Co',applicationLink:'https://himalayas.app/jobs/example',
   guid:'https://himalayas.app/companies/example/jobs/writer',employmentType:'Contractor',
@@ -40,4 +40,20 @@ test('world radar tolerates one API failing and preserves source failure evidenc
 test('reports credit both providers with no fictional payment',()=>{
  const s=makeReport({sources:[],leads:[]});
  assert.match(s,/Himalayas/);assert.match(s,/Remotive/);assert.match(s,/RM0/);
+});
+
+test('Chinese translation does not outrank Malay competency',()=>{
+ const x=selectLeads([
+  normalizeHimalayas({title:'Freelance Traditional Chinese to English Translator',
+    guid:'https://himalayas.app/companies/x/jobs/chinese',
+    applicationLink:'https://himalayas.app/companies/x/jobs/chinese',
+    employmentType:'Contractor',locationRestrictions:['Malaysia']}),
+  normalizeLever({id:'job-1',text:'AI Data Specialist - Malay',
+    hostedUrl:'https://jobs.lever.co/rws/job-1',
+    categories:{location:'Johor Bahru',commitment:'Temporary/Contract'},
+    descriptionPlain:'Review Malay AI answers'})
+ ]);
+ assert.equal(x.length,1);
+ assert.equal(x[0].source,'RWS via Lever');
+ assert.equal(x[0].region,'MALAYSIA_INCLUDED');
 });

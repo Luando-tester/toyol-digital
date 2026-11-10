@@ -31,8 +31,8 @@ async function getGitHub(path,token){
  }finally{clearTimeout(timer);}
 }
 export function sampleTasks(items,limit=4){
- return shortlist(items,1000).filter(x=>boards.has(x.source)&&issueLink.test(x.url)&&x.amount<=30)
-   .sort((a,b)=>a.amount-b.amount).slice(0,limit);
+ return shortlist(items,1000).filter(x=>boards.has(x.source)&&issueLink.test(x.url)&&x.currency==='USD'&&x.amount>=200)
+   .sort((a,b)=>b.score-a.score||a.amount-b.amount).slice(0,limit);
 }
 export async function inspect(items,{githubGet=getGitHub,limit=4,now=Date.now(),token=''}={}){
  const picks=sampleTasks(items,limit);

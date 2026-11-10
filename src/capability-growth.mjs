@@ -39,17 +39,16 @@ export function learningRole(offer){
 export function balancedFieldSelection(ranked,limit=5,runNumber=1){
  const n=Math.max(1,Math.min(5,Math.floor(Number(limit))||1));
  const list=Array.isArray(ranked)?ranked:[];
- const practice=list.filter(x=>learningRole(x.offer)==='FIELD_PRACTICE');
- const stretch=list.filter(x=>learningRole(x.offer)!=='FIELD_PRACTICE');
- const primary=practice.slice(0,n);
- // Keep one bounded challenge/exploration slot, not a hard monetary gate.
- if(stretch.length&&n>1){
-  const pick=stretch[(Math.max(1,Math.floor(Number(runNumber)||1))-1)%stretch.length];
-  if(primary.length>=n)primary.pop();
-  primary.push(pick);
+ const selected=list.slice(0,n);
+ const role=x=>learningRole(x?.offer);
+ const practice=list.find(x=>role(x)==='FIELD_PRACTICE');
+ const challenges=list.filter(x=>role(x)!=='FIELD_PRACTICE');
+ if(n>1&&selected.length>1&&practice&&!selected.some(x=>role(x)==='FIELD_PRACTICE'))
+  selected[selected.length-1]=practice;
+ if(n>1&&selected.length>1&&challenges.length&&!selected.some(x=>role(x)!=='FIELD_PRACTICE')){
+  const idx=(Math.max(1,Math.floor(Number(runNumber)||1))-1)%challenges.length;
+  selected[selected.length-1]=challenges[idx];
  }
- // If all offers are stretch, research them anyway rather than falsely
- // declaring the market empty. Hard safety and terms gates apply later.
- for(const item of list)if(primary.length<n&&!primary.some(x=>x.issue_url===item.issue_url))primary.push(item);
- return primary.slice(0,n).map(x=>({...x,learning_role:learningRole(x.offer)}));
+ return [...new Map(selected.map(x=>[x.issue_url,x])).values()]
+  .map(x=>({...x,learning_role:learningRole(x.offer)}));
 }

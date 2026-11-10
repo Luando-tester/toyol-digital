@@ -5,6 +5,7 @@
 import {assessEffort,valueAssessment,parseQuestBoard} from './opportunity.mjs';
 import {rankWithMemory} from './learning.mjs';
 import {firstCatchAssessment} from './first-catch.mjs';
+import {balancedFieldSelection} from './capability-growth.mjs';
 
 const TEST=/\b(reproduce|regression|unit test|tests?|expected|actual|steps to reproduce|acceptance)\b/i;
 const BUG=/\b(bug|fix|error|regression|crash|broken|wrong|fails?|incorrect)\b/i;
@@ -56,25 +57,16 @@ export function chooseBoardOpportunities(body,ledger,runNumber=1,limit=5){
   const financial=valueAssessment(offer);
   return {...financial,offer,first_catch:firstCatchAssessment(offer)};
  });
- // Founder mandate: no small advertised reward enters the first paid-work
- // shortlist. Unverified MYR/foreign conversion must first obtain a quote.
- const eligible=assessed.filter(x=>x.eligible_to_investigate&&
-  x.first_catch.eligible_for_paid_first_catch);
- // Memory changes future decisions. Give one slot for a lower-ranked option
- // so a handful of difficult issues cannot permanently monopolize compute.
+ // Smaller real work develops competence; USD200 is an aspirational level,
+ // never a barrier to learning or otherwise legitimate earning.
+ const eligible=assessed.filter(x=>x.eligible_to_investigate);
  const ranked=rankWithMemory(eligible,ledger,25);
- const cap=Math.min(5,Math.max(1,Math.floor(limit)||1));
- const primary=ranked.slice(0,Math.max(1,cap-1));
- const exploratory=ranked.slice(primary.length);
- if(exploratory.length){
-  const idx=((Math.max(1,Math.floor(Number(runNumber)||1))-1)%exploratory.length);
-  primary.push(exploratory[idx]);
- }
- return primary.slice(0,cap).map(x=>({
+ return balancedFieldSelection(ranked,limit,runNumber).map(x=>({
   url:x.issue_url,offer:x.offer,review_priority_points:x.review_priority_points,
   screening_effort:x.effort.complexity,learning:x.learning,money_grade:x.money_grade,
   Malaysia_cashout_verified:x.payout_malaysia_verified,
-  first_catch:x.first_catch
+  first_catch:x.first_catch,
+  learning_role:x.learning_role
  }));
 }
 export function composeRepairTask(issue,situation){

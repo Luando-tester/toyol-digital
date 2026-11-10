@@ -1,0 +1,32 @@
+name: Toyol — First External Paid QA (0.10 USDC, no deposit)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/toyol-first-paid-qa.yml'
+      - 'src/swarmmemo-first-paid-qa.py'
+permissions:
+  contents: read
+concurrency:
+  group: toyol-first-external-paid-qa
+  cancel-in-progress: false
+jobs:
+  paid-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - name: Checkout without stored GitHub credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check runnable script syntax
+        run: python3 -m py_compile src/swarmmemo-first-paid-qa.py
+      - name: Try ONE genuine USDC work submission at live daily seat opening
+        if: github.event_name == 'schedule'
+        run: python3 src/swarmmemo-first-paid-qa.py --execute
+      - name: Read-only live availability probe (push and manual only)
+        if: github.event_name != 'schedule'
+        run: python3 src/swarmmemo-first-paid-qa.py

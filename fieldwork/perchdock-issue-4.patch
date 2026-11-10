@@ -1,0 +1,33 @@
+diff --git a/scripts/build.sh b/scripts/build.sh
+index 1e1b12d..ae34d92 100644
+--- a/scripts/build.sh
++++ b/scripts/build.sh
+@@ -5,6 +5,28 @@
+ #   --install  Copy the build to /Applications and launch it from there.
+ set -euo pipefail
+ 
++# Validate arguments before changing directories or touching signing credentials.
++usage() {
++  awk '
++    /^# Usage:/ { printing = 1 }
++    printing && /^# / { sub(/^# /, ""); print; next }
++    printing { exit }
++  ' "$0"
++}
++
++case "${1:-}" in
++  ""|--run|--install) ;;
++  -h|--help)
++    usage
++    exit 0
++    ;;
++  *)
++    printf 'Unknown option: %s\n' "$1" >&2
++    usage >&2
++    exit 1
++    ;;
++esac
++
+ cd "$(dirname "$0")/.."
+ 
+ # Ensure the local signing identity exists and its keychain is unlocked.

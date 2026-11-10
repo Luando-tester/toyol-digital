@@ -1,20 +1,28 @@
 # 🧟 Toyol Digital
 
-**Founder mandate — First Catch:** Minimum **USD200 net daripada SATU tugasan berbayar**, dengan laluan wang yang sah dan boleh diterima di Malaysia. Bounty USD200 yang hanya diiklankan **tidak** dikira sebagai kejayaan. Radar dan penyedia draf berbayar mesti mengutamakan syarat ini. Sasaran, bukan jaminan hasil.
+**Matlamat kematangan Toyol:** bina kompetensi sehingga mampu menyelesaikan kerja bernilai sekitar **USD200 atau lebih** dengan kualiti, daya saing dan bukti penerimaan yang nyata. Angka ini **bukan nilai minimum bounty**. Tugasan kecil yang sah boleh menjadi latihan lapangan dan sumber pendapatan sebenar. Keupayaan mesti dibuktikan melalui ujian luaran dan penerimaan, bukan jumlah draf atau harga diiklankan.
 
 **Status v0.9: Qwen 3B QUEST-READY (terhad), bukan INCOME-READY. Kerja luar diterima: 0. Pendapatan disahkan: RM0.**
 
-**Decision Engine (9 Nov 2026):** [Situation + Value + Learning](docs/DECISION_ENGINE.md) menggabungkan penilaian masalah, pemilihan strategi, carian simbol kod, perbandingan metadata PR pesaing, rekod pembelajaran dan pengasingan ganjaran diiklankan daripada wang yang boleh dikeluarkan di Malaysia. Ini masih percubaan untuk menghasilkan patch luar, bukan sistem pendapatan terjamin.\n\n**Resilience Engine (9 Nov 2026):** Toyol kini boleh cuba membaiki patch yang gagal sehingga **dua kali setiap isu**, memulihkan fail asal, merekod sebab kegagalan, dan menggilir sasaran supaya tidak terperangkap pada lima isu sama. Persaingan bukan alasan automatik untuk berundur, tetapi larangan keselamatan serta syarat penyertaan kekal. Rujuk [Resilience Engine](docs/RESILIENCE_ENGINE.md). Ini belum bukti pekerjaan berbayar berjaya.\n\n**Naik taraf kompetensi (9 Nov 2026):** jumlah komen/PR pesaing tidak lagi menyebabkan penolakan automatik. Toyol membezakan kes keselamatan, keperluan pengesahan dan peluang yang masih boleh dicabar dengan bukti. Lihat [Competency Engine](docs/COMPETENCY_ENGINE.md). Ini **bukan** bukti patch luar sudah diterima.
+**Pembinaan kompetensi bertahap:** [Capability Growth](docs/CAPABILITY_GROWTH.md) menyusun latihan lapangan, cabaran kompetitif dan bukti kenaikan tahap. Tiada penolakan automatik berdasarkan nilai bounty.
 
-Toyol menyemak [suapan terbuka Jobbi](https://jobbi.org/gigs.json) secara berkala, mengasingkan tugasan untuk agen digital yang mengiklankan ganjaran USD200 ke atas, dan menyenarai pendek sehingga lapan calon. Ia menapis petunjuk deposit, staking, referral, yuran dan posting media sosial.
+**Decision Engine (9 Nov 2026):** [Situation + Value + Learning](docs/DECISION_ENGINE.md) menggabungkan penilaian masalah, pemilihan strategi, carian simbol kod, perbandingan metadata PR pesaing, rekod pembelajaran dan pengasingan ganjaran diiklankan daripada wang yang boleh dikeluarkan di Malaysia. Ini masih percubaan untuk menghasilkan patch luar, bukan sistem pendapatan terjamin.
+
+**Resilience Engine (9 Nov 2026):** Toyol kini boleh cuba membaiki patch yang gagal sehingga **dua kali setiap isu**, memulihkan fail asal, merekod sebab kegagalan, dan menggilir sasaran supaya tidak terperangkap pada lima isu sama. Persaingan bukan alasan automatik untuk berundur, tetapi larangan keselamatan serta syarat penyertaan kekal. Rujuk [Resilience Engine](docs/RESILIENCE_ENGINE.md). Ini belum bukti pekerjaan berbayar berjaya.
+
+**Naik taraf kompetensi (9 Nov 2026):** jumlah komen/PR pesaing tidak lagi menyebabkan penolakan automatik. Toyol membezakan kes keselamatan, keperluan pengesahan dan peluang yang masih boleh dicabar dengan bukti. Lihat [Competency Engine](docs/COMPETENCY_ENGINE.md). Ini **bukan** bukti patch luar sudah diterima.
+
+Toyol menyemak [suapan terbuka Jobbi](https://jobbi.org/gigs.json) secara berkala, mengasingkan tugasan untuk agen digital pada pelbagai nilai ganjaran, dan menyenarai pendek sehingga lapan calon. Ia menapis petunjuk deposit, staking, referral, yuran dan posting media sosial.
 
 Jika ada calon, Toyol membuka atau mengemas kini satu **GitHub Issue** supaya hasil tidak hilang. Bahagian **Quest Progress** pada Issue #1 menyatakan pencetus sebenar, bilangan calon khusus, sebab penolakan dan pendapatan yang disahkan. Semua penyenaraian ialah *petunjuk sahaja* dan perlu disahkan di sumber asal.
 
-**Keputusan keluaran, lima cubaan quest luar dan syarat berhenti:** [QUEST_RELEASE_DECISION_2026-11-09.md](docs/QUEST_RELEASE_DECISION_2026-11-09.md). Pautan bukti model 3B: [run #42566050523](https://github.com/ilhamraduanbis-source/toyol-digital/actions/runs/42566050523). Model harian telah dinaik taraf kepada Qwen 3B; masih belum ada ganjaran diterima.\n\n## Operasi
+**Keputusan keluaran, lima cubaan quest luar dan syarat berhenti:** [QUEST_RELEASE_DECISION_2026-11-09.md](docs/QUEST_RELEASE_DECISION_2026-11-09.md). Pautan bukti model 3B: [run #42566050523](https://github.com/ilhamraduanbis-source/toyol-digital/actions/runs/42566050523). Model harian telah dinaik taraf kepada Qwen 3B; masih belum ada ganjaran diterima.
 
-- **Tugas automatik**: [Toyol Radar (RM0)](../../actions/workflows/toyol.yml), dijadualkan pada minit 29 setiap jam (UTC), sekali sejam mengikut had Jobbi. Pelaksanaan cron masih belum dibuktikan oleh rekod `schedule`., tertakluk pada kelewatan GitHub Actions.
+## Operasi
+
+- **Tugas automatik**: [Toyol Radar (RM0)](../../actions/workflows/toyol.yml), dijadualkan pada minit 29 setiap jam (UTC), sekali sejam mengikut had Jobbi. Pelaksanaan cron telah dibuktikan oleh run GitHub `schedule`, tertakluk pada kelewatan GitHub Actions.
 - **Hasil imbasan**: Actions → run → Summary. Jika ada calon, semak tab Issues.
-- **Ujian**: Node.js terbina dalam, tanpa pakej pihak ketiga: `node --test`.
+- **Ujian**: Node.js terbina dalam, tanpa pakej pihak ketiga: `node --test test/*.test.mjs`.
 - **Trigger manual**: Actions → Toyol Radar (RM0) → Run workflow.
 - **Kod**: `src/toyol.mjs`; jadual: `.github/workflows/toyol.yml`.
 

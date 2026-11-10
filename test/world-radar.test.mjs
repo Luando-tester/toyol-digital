@@ -57,3 +57,14 @@ test('Chinese translation does not outrank Malay competency',()=>{
  assert.equal(x[0].source,'RWS via Lever');
  assert.equal(x[0].region,'MALAYSIA_INCLUDED');
 });
+
+test('clinical doctorate and Singapore-only job titles never masquerade as MY skill fit',()=>{
+ const base={guid:'https://himalayas.app/companies/x/jobs/test',
+  applicationLink:'https://himalayas.app/companies/x/jobs/test',
+  employmentType:'Contractor',locationRestrictions:['Malaysia']};
+ const medical=normalizeHimalayas({...base,title:'Malay Psychiatrist - Remote'});
+ const doctorate=normalizeHimalayas({...base,title:'Malay Psychologist PhD'});
+ const sg=normalizeLever({id:'sg',text:'Linguistic AI Auditor - Malay (Singapore)',hostedUrl:'https://jobs.lever.co/rws/sg',
+  categories:{location:'Singapore',commitment:'Contract'}});
+ assert.equal(selectLeads([medical,doctorate,sg]).length,0);
+});

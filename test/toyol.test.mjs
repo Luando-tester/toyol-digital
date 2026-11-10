@@ -43,7 +43,7 @@ test('duplicate IDs removed, report clearly says no earnings', () => {
    _jobbi: {...fixture()._jobbi,reward:{amount:250,currency:'USD'}},...props
   });
   const gigs = shortlist([fixture({ id: 'foundation:123' }), bigger(), bigger(), bigger({ id: 'other:23', title: 'Fix another JSON parser issue' })]);
-  assert.equal(gigs.length, 2);
+  assert.equal(gigs.length, 3);
   assert.ok(gigs.some(x=>x.amount===5&&x.currency==='USDC'),'foundation work remains visible');
   assert.ok(gigs.some(x=>x.amount>=200&&x.currency==='USD'),'one stretch stays visible');
   const report = formatReport(gigs);

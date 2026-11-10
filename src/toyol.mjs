@@ -62,8 +62,12 @@ export function shortlist(items, limit = 8, now = Date.now()) {
   const max=Math.max(1,Math.floor(limit)||1);
   const selected=candidates.slice(0,max);
   // Exposure to harder paid work matters, but it cannot erase foundation work.
+  const foundation=candidates.find(g=>g.amount<200||g.currency!=='USD');
   const stretch=candidates.find(g=>g.currency==='USD'&&g.amount>=200);
-  if(stretch&&max>1&&!selected.includes(stretch))selected[selected.length-1]=stretch;
+  if(foundation&&max>1&&selected.length>1&&!selected.some(g=>g.amount<200||g.currency!=='USD'))
+   selected[selected.length-1]=foundation;
+  if(stretch&&max>1&&selected.length>1&&!selected.includes(stretch))
+   selected[selected.length-2]=stretch;
   return selected;
 }
 

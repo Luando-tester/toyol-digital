@@ -28,7 +28,7 @@ test('Taskmarket 6-decimal units are not mistaken for millions of USD',()=>{
  assert.equal(t.funding_from_primary_verified,false);
  assert.equal(t.MYR_cashout_verified,false);
 });
-test('Taskmarket stake requirement is not allowed with owner's cash',()=>{
+test("Taskmarket stake requirement is not allowed with owner money",()=>{
  const id='0x'+'a'.repeat(64);
  assert.equal(fromTaskmarket({id,status:'open',reward:'2000000',description:'Fix code',stakeRequired:true}),null);
 });

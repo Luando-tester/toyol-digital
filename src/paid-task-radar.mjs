@@ -55,6 +55,7 @@ export function fromTaskmarket(task){
  if(!money(amount))return null;
  const chain=String(task.chainId??task.chain??'');
  const code=/(^|[^0-9])8453([^0-9]|$)|\bbase\b/i.test(chain)?'USDC':'TOKEN_UNVERIFIED';
+ if(code!=='USDC')return null; // Base is the only activated Toyol payout rail.
  return {id:'taskmarket:'+task.id,source:'Taskmarket',
   url:'https://api.taskmarket.dev/api/tasks/'+task.id,
   title:clean(String(task.description||'').split('\n')[0],140),

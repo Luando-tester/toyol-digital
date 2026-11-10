@@ -1,0 +1,40 @@
+name: Toyol World Radar — Global Opportunities (MYR-first)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 0 * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/world-radar.yml'
+permissions:
+  contents: read
+concurrency:
+  group: toyol-world-radar
+  cancel-in-progress: false
+jobs:
+  world-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout Toyol only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Verify the real-source scanner, not AI payout claims
+        run: node --test test/world-radar.test.mjs
+      - name: Search official Himalayas and Remotive APIs
+        run: node src/world-radar.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Preserve discovery results and original links
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: toyol-world-leads
+          path: out/world/
+          if-no-files-found: ignore
+          retention-days: 7

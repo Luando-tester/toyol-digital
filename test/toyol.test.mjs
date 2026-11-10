@@ -44,7 +44,8 @@ test('duplicate IDs removed, report clearly says no earnings', () => {
   });
   const gigs = shortlist([fixture(), bigger(), bigger(), bigger({ id: 'other:23', title: 'Fix another JSON parser issue' })]);
   assert.equal(gigs.length, 2);
-  assert.ok(gigs.every(x=>x.amount>=200&&x.currency==='USD'));
+  assert.ok(gigs.some(x=>x.amount===5&&x.currency==='USDC'),'foundation work remains visible');
+  assert.ok(gigs.some(x=>x.amount>=200&&x.currency==='USD'),'one stretch stays visible');
   const report = formatReport(gigs);
   assert.match(report, /BUKAN PENDAPATAN/);
   assert.match(report, /tidak menuntut tugasan/);

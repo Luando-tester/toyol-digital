@@ -70,3 +70,9 @@ test('purchase-required Taskmarket bounty is rejected under RM0 policy',()=>{
  assert.equal(candidate.suitable_for_draft,false);
  assert.equal(shortlist([listing]).length,0);
 });
+
+test('Tempo or unverified Taskmarket token cannot be offered to Base-only Toyol wallet',()=>{
+ const id='0x'+'a'.repeat(64);
+ assert.equal(fromTaskmarket({id,status:'open',chainId:4217,reward:'100000000',mode:'bounty',description:'Produce video'}),null);
+ assert.ok(fromTaskmarket({id,status:'open',chainId:8453,reward:'100000000',mode:'bounty',description:'Produce code'}));
+});

@@ -38,11 +38,12 @@ test('board triage prioritizes feasible small work and keeps an exploration slot
   line(6,'Fix documentation spelling',1)
  ].join('');
  const shortlist=chooseBoardOpportunities(board,emptyLedger(),1,5);
- assert.equal(shortlist.length,4);
- assert.ok([u(1),u(3),u(4)].includes(shortlist[0].url),'a bounded USD200+ repair outranks a vague high-dollar platform build');
+ assert.equal(shortlist.length,5);
+ assert.ok([u(1),u(3),u(4)].includes(shortlist[0].url),'bounded code repair should outrank vague complex project');
  assert.equal(shortlist[0].money_grade,'ADVERTISED_ONLY');
  assert.ok(shortlist.some(x=>x.url===u(1)));
- assert.ok(shortlist.every(x=>x.first_catch.eligible_for_paid_first_catch));
+ assert.ok(shortlist.some(x=>x.offer.advertised_amount<200),'small field work must stay selectable');
+ assert.ok(shortlist.some(x=>x.offer.advertised_amount>=200),'stretch work remains visible');
  assert.ok(shortlist.some(x=>x.screening_effort==='COMPLEX'));
 });
 test('repeated source failures change what gets sampled without permanent blacklisting',()=>{

@@ -14,7 +14,7 @@ const START='<!-- toyol-paid-tasks-v1 -->';
 const END='<!-- /toyol-paid-tasks-v1 -->';
 const SOURCES=[
  {name:'Jobbi agent gigs',url:'https://jobbi.org/gigs.json?lane=agent&limit=1000'},
- {name:'Taskmarket bounty',url:'https://api.taskmarket.dev/api/tasks?status=open&mode=bounty&sort=newest&limit=50'},
+ {name:'Taskmarket open',url:'https://api.taskmarket.dev/api/tasks?status=open&sort=newest&limit=100'},
  {name:'BasedAgents tasks',url:'https://api.basedagents.ai/v1/tasks?status=open'}
 ];
 const skillText=/(code|bug|fix|program|script|api|json|csv|data|documentation|readme|test|research|content|translate|summari|article|report|spreadsheet|analysis|markdown|python|javascript|typescript|extract|parse|validate|audit|design|write)/i;
@@ -42,7 +42,9 @@ export function fromJobbi(item){
   source_primary_verified:false};
 }
 export function fromTaskmarket(task){
- if(task?.status!=='open'||task?.stakeRequired===true||!/^0x[a-f\d]{64}$/i.test(task?.id||''))return null;
+ if(task?.status!=='open'||task?.stakeRequired===true||task?.depositRequired===true||
+   !['bounty','benchmark'].includes(String(task?.mode||'bounty').toLowerCase())||
+   !/^0x[a-f\d]{64}$/i.test(task?.id||''))return null;
  const raw=String(task.reward||'');
  if(!/^\d{1,18}$/.test(raw))return null;
  const amount=Number(raw)/1e6;
@@ -177,10 +179,10 @@ export async function scan(fetchJSON=getJSON){
   try{
    const x=await fetchJSON(s.url);
    const rows=s.name.startsWith('Jobbi')?(Array.isArray(x.items)?x.items:[]):
-    s.name==='Taskmarket bounty'?(Array.isArray(x.tasks)?x.tasks:[]):
+    s.name==='Taskmarket open'?(Array.isArray(x.tasks)?x.tasks:[]):
     Array.isArray(x)?x:Array.isArray(x.tasks)?x.tasks:Array.isArray(x.data)?x.data:[];
    const mapped=rows.slice(0,1000).map(s.name.startsWith('Jobbi')?fromJobbi:
-    s.name==='Taskmarket bounty'?fromTaskmarket:fromBasedAgents).filter(Boolean);
+    s.name==='Taskmarket open'?fromTaskmarket:fromBasedAgents).filter(Boolean);
    sources.push({name:s.name,status:'OK',count:rows.length,normalized:mapped.length,
     examples:mapped.slice(0,8).map(t=>({title:t.title,url:t.url,amount:t.reward_amount,currency:t.reward_currency,brief:t.brief.slice(0,160)}))});
    all.push(...mapped);

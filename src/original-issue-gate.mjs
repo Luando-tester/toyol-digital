@@ -38,7 +38,7 @@ export function evaluateOriginalIssue(task, issue) {
 }
 
 export async function validateOriginalIssues(tasks,{fetchIssue,token=process.env.GITHUB_TOKEN}={}) {
-  const read=fetchIssue||async loc=>{
+  const read=fetchIssue||(async loc=>{
     const ac=new AbortController();
     const timer=setTimeout(()=>ac.abort(),9000);
     try {
@@ -49,7 +49,7 @@ export async function validateOriginalIssues(tasks,{fetchIssue,token=process.env
       if(!response.ok)throw Error('GITHUB_HTTP_'+response.status);
       return await response.json();
     } finally {clearTimeout(timer);}
-  };
+  });
   const checked=await Promise.all(tasks.map(async task=>{
     const loc=locateGitHubIssue(task.url);
     if(!loc)return {...task,original_issue:{status:'NOT_GITHUB_ISSUE'}};

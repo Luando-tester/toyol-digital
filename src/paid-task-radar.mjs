@@ -7,6 +7,7 @@
  * Direct provider APIs complement the independent Jobbi index.
  */
 import {mkdirSync,writeFileSync,appendFileSync} from 'node:fs';
+import {validateOriginalIssues} from './original-issue-gate.mjs';
 
 const REPO='ilhamraduanbis-source/toyol-digital';
 const ISSUE=4;
@@ -154,13 +155,18 @@ export function report(data){
  'Only public work explicitly open to a participant may be attempted. Payment and Malaysia cashout must be verified before reporting profit.',''
  ];
  for(const s of data.sources)lines.push('- '+s.name+': '+s.status+' ('+s.count+' tasks inspected)'+(s.error?' — '+clean(s.error,90):''));
- lines.push('','## Tasks to investigate / attempt','');
+ lines.push('','## Original issue verification','',
+  '- GitHub issue sources checked: '+(data.original_github_issues_checked??'not run')+
+  '; closed source issues excluded: '+(data.source_closed_rejections?.length??0),
+  '- An open issue is NOT proof that its bounty is still payable; assignee, competition and payment need review.','',
+  '## Tasks to investigate / attempt','');
  if(!data.tasks.length)lines.push('No eligible task in the sampled sources. No inference about the whole internet.','');
  for(const t of data.tasks)lines.push(
   '- **'+clean(t.title,100).replace(/[\[\]*]/g,'')+'** — '+t.reward_amount+' '+t.reward_currency+
   ' ([original]('+t.url+'))',
   '  - '+t.source+' | payout: '+t.payout_rail+' | funding: '+t.funding_signal+
-  ' | local solve: '+t.execution_path+' | MYR payout: UNVERIFIED'
+  ' | local solve: '+t.execution_path+' | original: '+(t.original_issue?.status??'UNVERIFIED')+
+  ' | warnings: '+(t.original_issue?.warnings?.join(',')||'none')+' | MYR payout: UNVERIFIED'
  );
  lines.push('','**Operational gate:** Read original requirements → solve and verify → lawful claim/submit with an authorized account → maintainer acceptance → verified settlement → confirmed MYR receipts.','');
  return lines.join('\n');
@@ -213,6 +219,10 @@ async function publish(content,token){
 }
 export async function main({discover=scan,writeIssue=publish}={}){
  const data=await discover();
+ const verified=await validateOriginalIssues(data.tasks||[]);
+ data.tasks=verified.active;
+ data.source_closed_rejections=verified.rejected.map(x=>({title:x.title,url:x.url,reason:x.next_action}));
+ data.original_github_issues_checked=verified.checked_github;
  mkdirSync('out/paid-tasks',{recursive:true});
  writeFileSync('out/paid-tasks/lead-evidence.json',JSON.stringify(data,null,2));
  const md=report(data);

@@ -14,11 +14,11 @@ const START='<!-- toyol-world-radar-v1 -->';
 const END='<!-- /toyol-world-radar-v1 -->';
 const queries=[
  {q:'content writer',country:'MY',employment_type:'Contractor',sort:'recent'},
- {q:'translator',country:'MY',employment_type:'Contractor',sort:'recent'},
+ {q:'Malay',country:'MY',employment_type:'Contractor',sort:'recent'},
  {q:'data analyst',country:'MY',employment_type:'Contractor',sort:'recent'},
  {q:'curriculum',worldwide:'true',employment_type:'Contractor',sort:'recent'}
 ];
-const remotiveCategories=['writing','data','software-dev'];
+const remotiveCategories=['writing','data','software-dev','marketing'];
 const forbidden=/(?:\bdeposit\b|\bstaking\b|\bfee to (?:apply|start|register)\b|\bpay to work\b|\bcrypto wallet\b|\bupfront payment\b|\breferral scheme\b)/i;
 const useful=/(?:writer|writing|content|edit|translat|malay|bahasa|research|curricul|lesson|course|education|data|analyst|spreadsheet|excel|document|presentation|powerpoint|automation|qa|testing|developer|coding|software)/i;
 const short=(x,n=160)=>String(x??'').replace(/[\x00-\x1f\x7f]/g,' ').replace(/\s+/g,' ').trim().slice(0,n);
@@ -65,10 +65,26 @@ export function normalizeRemotive(job){
   description:short(job?.description?.replace(/<[^>]*>/g,' '),400)
  };
 }
+export function normalizeLever(job){
+ const title=short(job?.text,145),url=safeUrl(job?.hostedUrl);
+ const location=String(job?.categories?.location||'');
+ const scope=job?.descriptionPlain||job?.description||'';
+ return {
+  id:'lever:rws:'+short(job?.id,150),
+  title,company:'RWS TrainAI',
+  url,source_url:url,source:'RWS via Lever',
+  employment:short(job?.categories?.commitment||'Contract',45),
+  region:/(?:malaysia|johor bahru|kuala lumpur|shah alam|petaling jaya|melaka|ipoh)/i.test(location)?'MALAYSIA_INCLUDED':region(location),
+  location_claim:short(location,130),
+  pay:null,description:short(scope.replace(/<[^>]*>/g,' '),400)
+ };
+}
 export function assessLead(x){
  if(!x?.url||!x.title||!useful.test(x.title+' '+x.description))return null;
  if(forbidden.test(x.title+' '+x.description))return null;
  if(x.region==='LOCATION_RESTRICTED')return null;
+ // Native Chinese/Japanese/Korean/etc. fluency is not a proven Toyol capability.
+ if(/(?:chinese|mandarin|cantonese|japanese|korean|german|french|spanish|bengali|tamil|telugu|hindi|portuguese|traditional chinese)/i.test(x.title))return null;
  let score=25;
  const type=x.employment.toLowerCase();
  if(/contract|freelanc|part.time|temporary/.test(type))score+=25;
@@ -76,7 +92,8 @@ export function assessLead(x){
  if(x.region==='MALAYSIA_INCLUDED')score+=20;
  else if(x.region==='WORLDWIDE_CLAIM')score+=16;
  if(/translat|malay|bahasa|curricul|education|lesson|writer|editing|research|document|data|spreadsheet|excel|presentation|qa/.test(x.title.toLowerCase()))score+=17;
- if(/software|developer|engineering/.test(x.title.toLowerCase()))score+=3;
+ if(/software|developer|engineering/.test(x.title.toLowerCase()))score-=15;
+ if(/(?:malay|bahasa melayu|malaysia|annotation|ai data specialist|linguistic|quality reviewer)/i.test(x.title))score+=22;
  if(/\b(?:senior|principal|director|head of|lead engineer|manager)\b/i.test(x.title))score-=22;
  if(/\b(?:intern|volunteer|unpaid)\b/i.test(x.title+' '+x.employment))score-=70;
  let pay=null;
@@ -123,7 +140,7 @@ export function makeReport(data){
 }
 async function json(url){
  const u=new URL(url);
- if(!(u.hostname==='himalayas.app'||u.hostname==='remotive.com'))throw Error('source not allowed');
+ if(!(u.hostname==='himalayas.app'||u.hostname==='remotive.com'||u.hostname==='api.lever.co'))throw Error('source not allowed');
  const ac=new AbortController(),timer=setTimeout(()=>ac.abort(),14000);
  try{
   const res=await fetch(u,{signal:ac.signal,headers:{Accept:'application/json','User-Agent':'ToyolWorldRadar/1.0 (public API; once daily)'}});
@@ -156,6 +173,14 @@ export async function scanSources(fetchJSON=json){
    sources.push({name:'Remotive '+category,status:'OK',count:jobs.length});
   }catch(e){sources.push({name:'Remotive '+category,status:'ERROR',count:0,error:String(e?.message||e)});}
  }
+ try{
+  const data=await fetchJSON('https://api.lever.co/v0/postings/rws?mode=json&limit=200');
+  if(!Array.isArray(data))throw Error('unexpected Lever response');
+  const malay=data.filter(j=>/\bmalay\b/i.test(String(j?.text||'')) &&
+   /(?:remote|malaysia|johor|kuala lumpur)/i.test(String(j?.categories?.location||'')+' '+String(j?.workplaceType||'')));
+  records.push(...malay.slice(0,20).map(normalizeLever));
+  sources.push({name:'RWS official Lever Malay roles',status:'OK',count:malay.length});
+ }catch(e){sources.push({name:'RWS official Lever Malay roles',status:'ERROR',count:0,error:String(e?.message||e)});}
  return {scanned_at:new Date().toISOString(),sources,
   input_records:records.length,leads:selectLeads(records,8),
   verified_paid_engagements:0,verified_received_myr:0};

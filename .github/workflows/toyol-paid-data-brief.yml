@@ -1,0 +1,32 @@
+name: Toyol — Real Paid Data Brief (0.02 USDC)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 23 * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/toyol-paid-data-brief.yml'
+      - 'src/swarmmemo-paid-data-brief.py'
+permissions:
+  contents: read
+concurrency:
+  group: toyol-one-paid-data-brief-per-day
+  cancel-in-progress: false
+jobs:
+  paid-data-brief:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 48
+    steps:
+      - name: Checkout without persisting GitHub credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check syntax of dedicated paid-work executor
+        run: python3 -m py_compile src/swarmmemo-paid-data-brief.py
+      - name: Perform real bounded public-data job when USDC seat opens
+        if: github.event_name == 'schedule'
+        run: python3 src/swarmmemo-paid-data-brief.py --execute
+      - name: Read-only availability check on code change or manual run
+        if: github.event_name != 'schedule'
+        run: python3 src/swarmmemo-paid-data-brief.py

@@ -142,7 +142,7 @@ def run(execute):
         key, client = root / "signer.json", root / "swarmmemo.py"
         urllib.request.urlretrieve(CLIENT, client)
         payload = client.read_bytes()
-        blob = b"blob " + str(len(payload)).encode() + b"\\x00" + payload
+        blob = b"blob " + str(len(payload)).encode() + b"\x00" + payload
         if hashlib.sha1(blob).hexdigest() != CLIENT_BLOB:
             raise RuntimeError("Pinned official client did not match GitHub release blob")
         created = subprocess.run(["python3", str(client), "keygen", str(key)],

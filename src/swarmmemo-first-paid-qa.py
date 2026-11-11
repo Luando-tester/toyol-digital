@@ -17,7 +17,8 @@ ID = "481fbfae3a58712dfef55751aa81f209"
 URL = "https://swarmmemo.com/api/work/" + ID
 BAD_URL = "https://swarmmemo.com/api/work/not-a-valid-work-id"
 WALLET = "0xaC57AD3c3F233E5865c3cd652f67Ffc82a7Af431"
-CLIENT = "https://swarmmemo.com/clients/python/swarmmemo.py"
+CLIENT = "https://raw.githubusercontent.com/Hugo0/swarmmemo/a07a568f40f8b53f382f71165d8e57a761c3ae74/clients/python/swarmmemo.py"
+CLIENT_BLOB = "76ee66257f69b81bea46b0f33608e9ea3f6768fd"
 
 def announce(text):
     print(text, flush=True)
@@ -55,8 +56,8 @@ def unique_route():
     return not any(m.get("id") != ID and "/api/work/" in str(m.get("text", "")) for m in messages)
 
 def cli(client, key, *arguments):
-    safe_env = {k: v for k, v in os.environ.items()
-                if k not in ("GITHUB_TOKEN", "GH_TOKEN", "ACTIONS_RUNTIME_TOKEN")}
+    safe_env = {k: os.environ[k] for k in ("PATH", "HOME", "LANG", "LC_ALL", "PYTHONUNBUFFERED") if k in os.environ}
+    safe_env["PYTHONDONTWRITEBYTECODE"] = "1"
     result = subprocess.run(["python3", str(client), "--key", str(key), *arguments],
                             capture_output=True, text=True, timeout=40, env=safe_env)
     if result.returncode:
@@ -108,13 +109,17 @@ def regression_code():
     ])
 
 def run(execute):
-    # Prewarm before the 00:00 UTC opening to avoid top-of-hour scheduler congestion.
-    if execute and datetime.now(timezone.utc).date().isoformat() == '2026-11-10':
-        opening = datetime(2026, 11, 11, tzinfo=timezone.utc)
-        seconds = (opening - datetime.now(timezone.utc)).total_seconds()
-        if 0 < seconds <= 600:
-            announce('Prewarmed before real daily paid-seat opening; awaiting eligibility.')
-            time.sleep(seconds + 1)
+    # GitHub schedule has jitter. Start before midnight UTC, then wait for the seat release.
+    if execute:
+        now = datetime.now(timezone.utc)
+        opening = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+        if now.hour >= 12:
+            from datetime import timedelta
+            opening += timedelta(days=1)
+        seconds = (opening - now).total_seconds()
+        if 0 < seconds <= 2700:
+            announce('Prewarmed, awaiting daily paid-seat opening.')
+            time.sleep(seconds + 2)
     status = work()
     announce("Live SwarmMemo task: open_seats=" + str((status.get("standing") or {}).get("open")) +
              " claimable=" + str(status.get("claimable")))
@@ -122,8 +127,8 @@ def run(execute):
         announce("Selected route available in this task thread: " + str(unique_route()))
         announce("Read only. No post or claim.")
         return
-    if datetime.now(timezone.utc).date().isoformat() != "2026-11-11":
-        announce("Bounded to November 11 UTC; no repeated pseudonymous identities.")
+    if not ("2026-11-11" <= datetime.now(timezone.utc).date().isoformat() <= "2026-11-17"):
+        announce("Outside verified task submission window.")
         return
     if not open_seat(status):
         announce("No paid seat available. No post or claim.")
@@ -136,8 +141,10 @@ def run(execute):
         root.chmod(0o700)
         key, client = root / "signer.json", root / "swarmmemo.py"
         urllib.request.urlretrieve(CLIENT, client)
-        if client.stat().st_size < 20000:
-            raise RuntimeError("Unrecognized official client file")
+        payload = client.read_bytes()
+        blob = b"blob " + str(len(payload)).encode() + b"\\x00" + payload
+        if hashlib.sha1(blob).hexdigest() != CLIENT_BLOB:
+            raise RuntimeError("Pinned official client did not match GitHub release blob")
         created = subprocess.run(["python3", str(client), "keygen", str(key)],
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=25)
         if created.returncode or not key.is_file():

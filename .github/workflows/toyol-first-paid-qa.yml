@@ -2,7 +2,7 @@ name: Toyol — First External Paid QA (0.10 USDC, no deposit)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '56 23 * * *'
+    - cron: '30 23 * * *'
   push:
     branches: [main]
     paths:
@@ -16,7 +16,7 @@ concurrency:
 jobs:
   paid-qa:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 48
     steps:
       - name: Checkout without stored GitHub credentials
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
